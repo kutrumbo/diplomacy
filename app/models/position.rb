@@ -1,5 +1,6 @@
 class Position < ApplicationRecord
   POSITION_TYPES = %w(army fleet).freeze
+  self.inheritance_column = :_type_disabled # disable single-table inheritance
 
   belongs_to :area
   belongs_to :coast, optional: true

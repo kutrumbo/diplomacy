@@ -5,4 +5,5 @@ class UserGame < ApplicationRecord
   belongs_to :user
 
   validates_inclusion_of :power, in: POWER_TYPES
+  validates :power, uniqueness: { scope: :game, message: 'Cannot repeat power within game' }
 end

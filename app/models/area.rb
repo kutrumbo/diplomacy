@@ -1,5 +1,6 @@
 class Area < ApplicationRecord
-  AREA_TYPES = %w(land sea coast).freeze
+  AREA_TYPES = %w(land sea).freeze
+  self.inheritance_column = :_type_disabled # disable single-table inheritance
 
   has_many :neighbors
   has_many :coasts
