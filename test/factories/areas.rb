@@ -1,7 +1,8 @@
 FactoryBot.define do
   factory :area do
-    name { 'Span' }
-    type { 'coast' }
+    name { 'Moscow' }
+    type { 'land' }
     supply_center { true }
+    power { 'russia' }
   end
 end

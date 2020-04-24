@@ -5,4 +5,9 @@ class AreaTest < ActiveSupport::TestCase
     assert(build(:area, type: 'land').valid?)
     assert(build(:area, type: 'coast').invalid?)
   end
+
+  test "validates power" do
+    assert(build(:area, power: 'austria').valid?)
+    assert(build(:area, power: 'america').invalid?)
+  end
 end

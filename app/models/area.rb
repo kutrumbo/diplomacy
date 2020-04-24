@@ -6,4 +6,5 @@ class Area < ApplicationRecord
   has_many :coasts
 
   validates_inclusion_of :type, in: AREA_TYPES
+  validates_inclusion_of :power, in: UserGame::POWER_TYPES, allow_nil: true
 end
