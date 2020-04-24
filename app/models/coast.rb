@@ -1,0 +1,2 @@
+class Coast < ApplicationRecord
+end
