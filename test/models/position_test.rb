@@ -1,7 +1,8 @@
 require 'test_helper'
 
 class PositionTest < ActiveSupport::TestCase
-  # test "the truth" do
-  #   assert true
-  # end
+  test "validates type" do
+    assert(build(:position, type: 'army').valid?)
+    assert(build(:position, type: 'solider').invalid?)
+  end
 end

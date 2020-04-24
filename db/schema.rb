@@ -21,14 +21,14 @@ ActiveRecord::Schema.define(version: 2020_04_24_194340) do
     t.boolean "supply_center", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.bigint "coast_id"
-    t.index ["coast_id"], name: "index_areas_on_coast_id"
   end
 
   create_table "coasts", force: :cascade do |t|
     t.string "direction", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.bigint "area_id", null: false
+    t.index ["area_id"], name: "index_coasts_on_area_id"
   end
 
   create_table "games", force: :cascade do |t|
@@ -40,9 +40,9 @@ ActiveRecord::Schema.define(version: 2020_04_24_194340) do
   create_table "neighbors", force: :cascade do |t|
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.bigint "area_id"
-    t.string "neighbor_type"
-    t.bigint "neighbor_id"
+    t.bigint "area_id", null: false
+    t.string "neighbor_type", null: false
+    t.bigint "neighbor_id", null: false
     t.index ["area_id"], name: "index_neighbors_on_area_id"
     t.index ["neighbor_type", "neighbor_id"], name: "index_neighbors_on_neighbor_type_and_neighbor_id"
   end
@@ -51,9 +51,9 @@ ActiveRecord::Schema.define(version: 2020_04_24_194340) do
     t.string "type", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.bigint "user_game_id"
-    t.bigint "turn_id"
-    t.bigint "position_id"
+    t.bigint "user_game_id", null: false
+    t.bigint "turn_id", null: false
+    t.bigint "position_id", null: false
     t.bigint "from_id"
     t.bigint "to_id"
     t.index ["from_id"], name: "index_orders_on_from_id"
@@ -67,9 +67,9 @@ ActiveRecord::Schema.define(version: 2020_04_24_194340) do
     t.string "type", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.bigint "area_id"
+    t.bigint "area_id", null: false
     t.bigint "coast_id"
-    t.bigint "user_game_id"
+    t.bigint "user_game_id", null: false
     t.index ["area_id"], name: "index_positions_on_area_id"
     t.index ["coast_id"], name: "index_positions_on_coast_id"
     t.index ["user_game_id"], name: "index_positions_on_user_game_id"
@@ -80,7 +80,7 @@ ActiveRecord::Schema.define(version: 2020_04_24_194340) do
     t.integer "number", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.bigint "game_id"
+    t.bigint "game_id", null: false
     t.index ["game_id"], name: "index_turns_on_game_id"
   end
 
@@ -88,8 +88,8 @@ ActiveRecord::Schema.define(version: 2020_04_24_194340) do
     t.string "power", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.bigint "game_id"
-    t.bigint "user_id"
+    t.bigint "game_id", null: false
+    t.bigint "user_id", null: false
     t.index ["game_id"], name: "index_user_games_on_game_id"
     t.index ["user_id"], name: "index_user_games_on_user_id"
   end
@@ -100,7 +100,7 @@ ActiveRecord::Schema.define(version: 2020_04_24_194340) do
     t.datetime "updated_at", precision: 6, null: false
   end
 
-  add_foreign_key "areas", "coasts"
+  add_foreign_key "coasts", "areas"
   add_foreign_key "neighbors", "areas"
   add_foreign_key "orders", "areas", column: "from_id"
   add_foreign_key "orders", "areas", column: "to_id"

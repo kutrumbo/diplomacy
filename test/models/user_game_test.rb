@@ -1,7 +1,8 @@
 require 'test_helper'
 
 class UserGameTest < ActiveSupport::TestCase
-  # test "the truth" do
-  #   assert true
-  # end
+  test "validates power" do
+    assert(build(:user_game, power: 'austria').valid?)
+    assert(build(:user_game, power: 'america').invalid?)
+  end
 end

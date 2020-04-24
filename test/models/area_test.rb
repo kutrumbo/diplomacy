@@ -1,7 +1,8 @@
 require 'test_helper'
 
 class AreaTest < ActiveSupport::TestCase
-  # test "the truth" do
-  #   assert true
-  # end
+  test "validates type" do
+    assert(build(:area, type: 'land').valid?)
+    assert(build(:area, type: 'hill').invalid?)
+  end
 end
