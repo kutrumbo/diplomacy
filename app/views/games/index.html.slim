@@ -5,3 +5,7 @@ h1 Games
       li = link_to game.name, game_path(game)
 - else
   p No active games
+- if current_user.present?
+  p
+    | Logged in as
+    =< current_user.name

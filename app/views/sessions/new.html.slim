@@ -1,0 +1,11 @@
+p = alert
+h1 Login
+= form_tag sessions_path do |form|
+  div
+    = label_tag :email
+    = text_field_tag :email
+  div
+    = label_tag :password
+    = password_field_tag :password
+  div
+    = submit_tag "Login"

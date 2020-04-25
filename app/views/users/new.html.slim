@@ -1,0 +1,14 @@
+p = alert
+h1 Sign Up
+= form_tag users_path do |form|
+  div
+    = label_tag :name
+    = text_field_tag :name
+  div
+    = label_tag :email
+    = text_field_tag :email
+  div
+    = label_tag :password
+    = password_field_tag :password
+  div
+    = submit_tag "Sign up"
