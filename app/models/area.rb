@@ -10,11 +10,27 @@ class Area < ApplicationRecord
   validates_inclusion_of :type, in: AREA_TYPES
   validates_inclusion_of :power, in: UserGame::POWER_TYPES, allow_nil: true
 
+  scope :land, -> { where(type: 'land') }
+  scope :sea, -> { where(type: 'sea') }
+  scope :coastal, -> { land.includes(:neighboring_areas).where(neighboring_areas_areas: { type: 'sea' }).distinct }
+  scope :army_accessible, -> { land }
+  scope :fleet_accessible, -> { includes(:neighboring_areas).sea.distinct.or(coastal) }
+  scope :has_coasts, -> { joins(:coasts).distinct }
+  scope :supply_center, -> { where(supply_center: true) }
+
   def has_coasts?
     self.coasts.present?
   end
 
   def coastal?
-    self.neighboring_areas.where(type: 'sea').any?
+    self.land? && self.neighboring_areas.where(type: 'sea').any?
+  end
+
+  def sea?
+    self.type == 'sea'
+  end
+
+  def land?
+    self.type == 'land'
   end
 end

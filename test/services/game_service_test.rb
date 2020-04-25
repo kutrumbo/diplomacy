@@ -1,3 +1,5 @@
+require 'test_helper'
+
 class GameServiceTest < ActiveSupport::TestCase
   parallelize_setup do |worker|
       AreaService.seed_areas
