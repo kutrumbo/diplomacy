@@ -9,4 +9,8 @@ class Position < ApplicationRecord
   has_one :game, through: :user_game
 
   validates_inclusion_of :type, in: POSITION_TYPES
+
+  def army?
+    self.type == 'army'
+  end
 end

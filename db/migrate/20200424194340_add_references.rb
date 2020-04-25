@@ -17,7 +17,7 @@ class AddReferences < ActiveRecord::Migration[6.0]
     add_reference :positions, :coast, null: true, foreign_key: true
     add_reference :positions, :user_game, null: false, foreign_key: true
 
-    add_reference :neighbors, :area, null: false, foreign_key: true
-    add_reference :neighbors, :neighbor, null: false, polymorphic: true, index: true
+    add_reference :borders, :area, null: false, foreign_key: true
+    add_reference :borders, :neighbor, null: false, polymorphic: true, index: true
   end
 end

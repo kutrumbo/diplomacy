@@ -24,6 +24,16 @@ ActiveRecord::Schema.define(version: 2020_04_25_024925) do
     t.string "power"
   end
 
+  create_table "borders", force: :cascade do |t|
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.bigint "area_id", null: false
+    t.string "neighbor_type", null: false
+    t.bigint "neighbor_id", null: false
+    t.index ["area_id"], name: "index_borders_on_area_id"
+    t.index ["neighbor_type", "neighbor_id"], name: "index_borders_on_neighbor_type_and_neighbor_id"
+  end
+
   create_table "coasts", force: :cascade do |t|
     t.string "direction", null: false
     t.datetime "created_at", precision: 6, null: false
@@ -36,16 +46,6 @@ ActiveRecord::Schema.define(version: 2020_04_25_024925) do
     t.string "name", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-  end
-
-  create_table "neighbors", force: :cascade do |t|
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.bigint "area_id", null: false
-    t.string "neighbor_type", null: false
-    t.bigint "neighbor_id", null: false
-    t.index ["area_id"], name: "index_neighbors_on_area_id"
-    t.index ["neighbor_type", "neighbor_id"], name: "index_neighbors_on_neighbor_type_and_neighbor_id"
   end
 
   create_table "orders", force: :cascade do |t|
@@ -104,8 +104,8 @@ ActiveRecord::Schema.define(version: 2020_04_25_024925) do
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
+  add_foreign_key "borders", "areas"
   add_foreign_key "coasts", "areas"
-  add_foreign_key "neighbors", "areas"
   add_foreign_key "orders", "areas", column: "from_id"
   add_foreign_key "orders", "areas", column: "to_id"
   add_foreign_key "orders", "positions"
