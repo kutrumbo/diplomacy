@@ -8,7 +8,7 @@ class Position < ApplicationRecord
   has_one :user, through: :user_game
   has_one :game, through: :user_game
 
-  validates_inclusion_of :type, in: POSITION_TYPES
+  validates_inclusion_of :type, in: POSITION_TYPES, allow_nil: true
 
   def fleet?
     self.type == 'fleet'

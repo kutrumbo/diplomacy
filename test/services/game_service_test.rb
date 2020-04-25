@@ -36,6 +36,6 @@ class GameServiceTest < ActiveSupport::TestCase
   test "creates starting positions" do
     GameService.initiate_game('foo', create_list(:user, 7))
 
-    assert_equal(22, Position.count)
+    assert_equal(42, Position.count)
   end
 end

@@ -11,6 +11,19 @@ class AreaTest < ActiveSupport::TestCase
     assert(build(:area, power: 'america').invalid?)
   end
 
+  test "validates unit" do
+    assert(build(:area, unit: 'army').valid?)
+    assert(build(:area, unit: 'fleet').valid?)
+    assert(build(:area, unit: nil).valid?)
+    assert(build(:area, unit: 'solider').invalid?)
+  end
+
+  test "validates coast" do
+    assert(build(:area, coast: 'south').valid?)
+    assert(build(:area, coast: nil).valid?)
+    assert(build(:area, coast: 'west').invalid?)
+  end
+
   test "coastal?" do
     ocean = create(:area, type: 'sea')
     sea = create(:area, type: 'sea')

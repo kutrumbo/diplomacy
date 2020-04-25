@@ -9,6 +9,8 @@ class Area < ApplicationRecord
 
   validates_inclusion_of :type, in: AREA_TYPES
   validates_inclusion_of :power, in: UserGame::POWER_TYPES, allow_nil: true
+  validates_inclusion_of :unit, in: Position::POSITION_TYPES, allow_nil: true
+  validates_inclusion_of :coast, in: Coast::DIRECTION_TYPES, allow_nil: true
 
   scope :land, -> { where(type: 'land') }
   scope :sea, -> { where(type: 'sea') }
@@ -17,6 +19,9 @@ class Area < ApplicationRecord
   scope :fleet_accessible, -> { includes(:neighboring_areas).sea.distinct.or(coastal) }
   scope :has_coasts, -> { joins(:coasts).distinct }
   scope :supply_center, -> { where(supply_center: true) }
+  scope :starting_army, -> { where(unit: 'army') }
+  scope :starting_fleet, -> { where(unit: 'fleet') }
+  scope :starting_power, -> (power) { where(power: power) }
 
   def has_coasts?
     self.coasts.present?

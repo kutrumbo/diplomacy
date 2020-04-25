@@ -28,4 +28,19 @@ class AreaServiceTest < ActiveSupport::TestCase
   test "supply_center" do
     assert_equal(34, Area.supply_center.count)
   end
+
+  test "unit" do
+    assert_equal(13, Area.starting_army.count)
+    assert_equal(9, Area.starting_fleet.count)
+  end
+
+  test "power" do
+    assert_equal(6, Area.starting_power('austria').count)
+    assert_equal(6, Area.starting_power('england').count)
+    assert_equal(6, Area.starting_power('france').count)
+    assert_equal(6, Area.starting_power('germany').count)
+    assert_equal(6, Area.starting_power('italy').count)
+    assert_equal(7, Area.starting_power('russia').count)
+    assert_equal(5, Area.starting_power('turkey').count)
+  end
 end

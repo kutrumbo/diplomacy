@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_04_25_024925) do
+ActiveRecord::Schema.define(version: 2020_04_25_211755) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -22,6 +22,8 @@ ActiveRecord::Schema.define(version: 2020_04_25_024925) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.string "power"
+    t.string "unit"
+    t.string "coast"
   end
 
   create_table "borders", force: :cascade do |t|
@@ -65,7 +67,7 @@ ActiveRecord::Schema.define(version: 2020_04_25_024925) do
   end
 
   create_table "positions", force: :cascade do |t|
-    t.string "type", null: false
+    t.string "type"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.bigint "area_id", null: false
