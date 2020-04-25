@@ -1,5 +1,5 @@
 FactoryBot.define do
   factory :user do
-    name { 'Bar' }
+    name { Faker::Name.first_name }
   end
 end

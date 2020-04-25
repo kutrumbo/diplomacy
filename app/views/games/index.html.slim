@@ -1,0 +1,7 @@
+h1 Games
+- if @games.present?
+  ul
+    - @games.each do |game|
+      li = link_to game.name, game_path(game)
+- else
+  p No active games

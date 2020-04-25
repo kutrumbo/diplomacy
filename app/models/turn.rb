@@ -5,4 +5,8 @@ class Turn < ApplicationRecord
   belongs_to :game
 
   validates_inclusion_of :type, in: TURN_TYPES
+
+  def year
+    1901 + (number / 5)
+  end
 end

@@ -1,6 +1,6 @@
 FactoryBot.define do
   factory :coast do
     area
-    direction { 'south' }
+    direction { Coast::DIRECTION_TYPES.sample }
   end
 end

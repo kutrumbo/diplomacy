@@ -1,6 +1,6 @@
 FactoryBot.define do
   factory :position do
-    type { 'army' }
+    type { Position::POSITION_TYPES.sample }
     area
     user_game
   end
