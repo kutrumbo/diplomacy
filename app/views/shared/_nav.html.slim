@@ -1,0 +1,9 @@
+nav[class="navbar"]
+  div[class="navbar-menu"]
+    div[class="navbar-start"]
+      = link_to 'Games', games_path, class: 'navbar-item'
+    div[class="navbar-end"]
+      - if current_user.present?
+        = link_to 'Sign out', logout_path, class: 'navbar-item'
+      - else
+        = link_to 'Sign in', login_path, class: 'navbar-item'

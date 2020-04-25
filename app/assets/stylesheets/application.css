@@ -6,10 +6,30 @@
  * vendor/assets/stylesheets directory can be referenced here using a relative path.
  *
  * You're free to add application-wide styles to this file and they'll appear at the bottom of the
- * compiled file so the styles you add here take precedence over styles defined in any other CSS/SCSS
+ * compiled file so the styles you add here t ake precedence over styles defined in any other CSS/SCSS
  * files in this directory. Styles in this file should be added after the last require_* statement.
  * It is generally better to create a new file per style scope.
  *
  *= require_tree .
  *= require_self
  */
+
+html {
+  background-color: hsl(0, 0%, 96%);
+}
+
+.margin-large {
+  margin-top: 48px;
+}
+
+.margin-small {
+  margin-top: 24px;
+}
+
+.container-sign-in {
+  width: 500px;
+}
+
+.card-game {
+  width: 180px;
+}

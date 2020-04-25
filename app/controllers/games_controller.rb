@@ -8,7 +8,7 @@ class GamesController < ApplicationController
   def show
     game_id = params[:id]
     @game = current_user.games.find(game_id)
-    @turn = @game.turns.order(:number).last
+    @turn = @game.current_turn
     @positions = current_user.user_games.find_by(game_id: game_id).positions
   end
 end

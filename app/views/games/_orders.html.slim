@@ -1,0 +1,7 @@
+h2[class="subtitle is-5"] Orders
+ul
+  - positions.each do |position|
+    li
+      => position.type.capitalize
+      | -
+      =< position.area.name

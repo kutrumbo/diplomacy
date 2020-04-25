@@ -1,11 +1,17 @@
-h1 Games
-- if @games.present?
-  ul
-    - @games.each do |game|
-      li = link_to game.name, game_path(game)
-- else
-  p No active games
-- if current_user.present?
-  p
-    | Logged in as
-    =< current_user.name
+div[class="container"]
+  div[class="box margin-large"]
+    - if @games.present?
+      div[class="columns"]
+        - @games.each do |game|
+          div[class="column"]
+            = link_to game_path(game)
+              div[class="card card-game"]
+                div[class="card-header"]
+                  p[class="card-header-title"] = game.name
+                div[class="card-content"]
+                  p
+                    => game.current_turn.type.capitalize
+                    | -
+                    =< game.current_turn.year
+    - else
+      p No active games

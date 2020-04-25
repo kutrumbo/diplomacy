@@ -1,20 +1,17 @@
-h1 = @game.name
-h2 Turn
-p
-  => @turn.type.capitalize
-  | -
-  =< @turn.year
-h2 Players
-ul
-  - @game.user_games.each do |user_game|
-    li
-      => user_game.user.name
-      | -
-      =< user_game.power.capitalize
-h2 Positions
-ul
-  - @positions.each do |position|
-    li
-      => position.type.capitalize
-      | -
-      =< position.area.name
+div[class="container"]
+  div[class="box margin-small"]
+    div[class="level"]
+      div[class="level-left"]
+        h1[class="title is-3"] = @game.name
+      div[class="level-right"]
+        h1[class="title is-3"]
+          => @turn.type.capitalize
+          | -
+          =< @turn.year
+    div[class="columns"]
+      div[class="column is-one-third"]
+        = render partial: 'orders', locals: { positions: @positions }
+        hr
+        = render partial: 'players', locals: { game: @game }
+      div[class="column"]
+        h2[class="subtitle is-5"] Map
