@@ -11,3 +11,10 @@ ul
       => user_game.user.name
       | -
       =< user_game.power.capitalize
+h2 Positions
+ul
+  - @positions.each do |position|
+    li
+      => position.type.capitalize
+      | -
+      =< position.area.name

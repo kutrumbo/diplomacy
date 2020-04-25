@@ -2,10 +2,12 @@ module GameService
   def self.initiate_game(name, users)
     raise 'Requires 7 users' if users.length != 7
 
-    game = Game.create!(name: name)
-    assign_powers(game, users)
-    Turn.create!(type: 'fall', number: 1, game: game)
-    create_starting_positions(game)
+    ActiveRecord::Base.transaction do
+      game = Game.create!(name: name)
+      assign_powers(game, users)
+      Turn.create!(type: 'fall', number: 1, game: game)
+      create_starting_positions(game)
+    end
   end
 
   private
