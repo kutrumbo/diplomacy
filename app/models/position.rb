@@ -7,6 +7,7 @@ class Position < ApplicationRecord
   belongs_to :user_game
   has_one :user, through: :user_game
   has_one :game, through: :user_game
+  has_many :neighboring_areas, through: :area
 
   validates_inclusion_of :type, in: POSITION_TYPES, allow_nil: true
 
