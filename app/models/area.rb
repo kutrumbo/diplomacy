@@ -3,6 +3,8 @@ class Area < ApplicationRecord
   self.inheritance_column = :_type_disabled # disable single-table inheritance
 
   has_many :borders
+  has_many :neighboring_areas, through: :borders, source: :neighbor, source_type: 'Area'
+  has_many :neighboring_coasts, through: :borders, source: :neighbor, source_type: 'Coast'
   has_many :coasts
 
   validates_inclusion_of :type, in: AREA_TYPES
@@ -13,6 +15,6 @@ class Area < ApplicationRecord
   end
 
   def coastal?
-    # TODO
+    self.neighboring_areas.where(type: 'sea').any?
   end
 end
