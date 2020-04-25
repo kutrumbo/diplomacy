@@ -1,14 +1,16 @@
-p = alert
-h1 Sign Up
-= form_tag users_path do |form|
-  div
-    = label_tag :name
-    = text_field_tag :name
-  div
-    = label_tag :email
-    = text_field_tag :email
-  div
-    = label_tag :password
-    = password_field_tag :password
-  div
-    = submit_tag "Sign up"
+div[class="container container-sign-in"]
+  div[class="box margin-large"]
+    h1[class="title is-3"] Sign Up
+    = form_tag users_path, class: 'form' do |form|
+      div[class="field"]
+        = label_tag :name, nil, class: 'label'
+        = text_field_tag :name, nil, class: 'input'
+      div[class="field"]
+        = label_tag :email, nil, class: 'label'
+        = text_field_tag :email, nil, class: 'input'
+      div[class="field"]
+        = label_tag :password, nil, class: 'label'
+        = password_field_tag :password, nil, class: 'input'
+      div[class="field"]
+        = submit_tag "Sign up", class: 'button is-primary'
+    p = alert
