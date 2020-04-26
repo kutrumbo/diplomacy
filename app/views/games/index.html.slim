@@ -3,15 +3,12 @@ div[class="container"]
     - if @games.present?
       div[class="columns"]
         - @games.each do |game|
-          div[class="column"]
+          div[class="column is-one-quarter"]
             = link_to game_path(game)
               div[class="card card-game"]
                 div[class="card-header"]
-                  p[class="card-header-title"] = game.name
+                  p[class="card-header-title"] = "#{game.name} (#{game.current_turn.type.capitalize} #{game.current_turn.year})"
                 div[class="card-content"]
-                  p
-                    => game.current_turn.type.capitalize
-                    | -
-                    =< game.current_turn.year
+                  = render partial: 'players', locals: { game: game, hide_header: true }
     - else
       p No active games
