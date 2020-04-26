@@ -110,7 +110,6 @@ export default function Orders(props) {
     })
     .catch(error => error.json())
     .then(errorJson => {
-      console.log(errorJson);
       setLoading(false);
       setError(errorJson);
     });
