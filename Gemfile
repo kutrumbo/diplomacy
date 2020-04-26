@@ -15,6 +15,7 @@ gem 'slim-rails'
 gem 'bcrypt'
 gem 'bulma-rails'
 gem 'react-rails'
+gem 'lodash-rails'
 
 group :development, :test do
   gem 'byebug', platforms: [:mri, :mingw, :x64_mingw]
