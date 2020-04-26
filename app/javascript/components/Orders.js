@@ -42,7 +42,7 @@ function OrderRow({ areas, order, position, updateOrders, validOrder }) {
       <td>{capitalize(position.type)}</td>
       <td>{areas[position.area_id].name}</td>
       <td>
-        <div className="select is-rounded">
+        <div className="select is-rounded is-small">
           <select value={order.type} name="type" onChange={handleChange}>
             {keys(validOrder).map(orderType =>
               <option key={orderType} value={orderType}>{orderType.toUpperCase()}</option>
@@ -52,9 +52,9 @@ function OrderRow({ areas, order, position, updateOrders, validOrder }) {
       </td>
       <td>
         {fromOptions &&
-          <div className="select">
-            <select value={order.from_id || ''} name="from_id" onChange={handleChange}>
-              {!order.from_id && <option value="" disabled>SELECT REGION</option>}
+          <div className="select is-small">
+            <select className="select-region" value={order.from_id || ''} name="from_id" onChange={handleChange}>
+              {!order.from_id && <option value="" disabled>---</option>}
               {fromOptions.map(fromId =>
                 <option key={fromId} value={fromId}>{areas[fromId].name}</option>
               )}
@@ -64,9 +64,9 @@ function OrderRow({ areas, order, position, updateOrders, validOrder }) {
       </td>
       <td>
         {toOptions &&
-          <div className="select">
-            <select value={order.to_id || ''} name="to_id" onChange={handleChange}>
-              {!order.to_id && <option value="" disabled>SELECT REGION</option>}
+          <div className="select is-small">
+            <select className="select-region" value={order.to_id || ''} name="to_id" onChange={handleChange}>
+              {!order.to_id && <option value="" disabled>---</option>}
               {toOptions.map(toId =>
                 <option key={toId} value={toId}>{areas[toId].name}</option>
               )}

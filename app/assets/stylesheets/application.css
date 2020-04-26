@@ -19,11 +19,11 @@ html {
 }
 
 .margin-large {
-  margin-top: 48px;
+  margin: 48px 0;
 }
 
 .margin-small {
-  margin-top: 24px;
+  margin: 24px 0;
 }
 
 .container-sign-in {
@@ -32,4 +32,8 @@ html {
 
 .card-game {
   width: 180px;
+}
+
+.select-region {
+  width: 170px;
 }
