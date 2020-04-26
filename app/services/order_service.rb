@@ -5,7 +5,7 @@ module OrderService
 
     user_game.positions.with_unit.reduce({}) do |order_map, position|
       position_order_map = {}
-      position_order_map['hold'] = [nil, nil]
+      position_order_map['hold'] = [[nil, nil]]
       moves = valid_move_orders(position, all_unit_positions.without(position))
       position_order_map['move'] = moves if moves.present?
       supports = valid_support_orders(position, all_unit_positions.without(position))

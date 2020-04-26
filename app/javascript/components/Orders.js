@@ -18,7 +18,7 @@ function validToOptions(order, validOrder) {
   return sortBy(uniq(map(validPaths, detail => last(detail))));
 }
 
-function OrderRow({ areas, order, position, updateOrders, validOrder }) {
+function OrderRow({ areas, error, order, position, updateOrders, validOrder }) {
   const fromOptions = validFromOptions(order, validOrder);
   const toOptions = validToOptions(order, validOrder);
 
@@ -42,7 +42,7 @@ function OrderRow({ areas, order, position, updateOrders, validOrder }) {
       <td>{capitalize(position.type)}</td>
       <td>{areas[position.area_id].name}</td>
       <td>
-        <div className="select is-rounded is-small">
+        <div className={`select is-rounded is-small${error ? ' is-danger' : ''}`}>
           <select value={order.type} name="type" onChange={handleChange}>
             {keys(validOrder).map(orderType =>
               <option key={orderType} value={orderType}>{orderType.toUpperCase()}</option>
@@ -52,7 +52,7 @@ function OrderRow({ areas, order, position, updateOrders, validOrder }) {
       </td>
       <td>
         {fromOptions &&
-          <div className="select is-small">
+          <div className={`select is-small${error ? ' is-danger' : ''}`}>
             <select className="select-region" value={order.from_id || ''} name="from_id" onChange={handleChange}>
               {!order.from_id && <option value="" disabled>---</option>}
               {fromOptions.map(fromId =>
@@ -64,7 +64,7 @@ function OrderRow({ areas, order, position, updateOrders, validOrder }) {
       </td>
       <td>
         {toOptions &&
-          <div className="select is-small">
+          <div className={`select is-small${error ? ' is-danger' : ''}`}>
             <select className="select-region" value={order.to_id || ''} name="to_id" onChange={handleChange}>
               {!order.to_id && <option value="" disabled>---</option>}
               {toOptions.map(toId =>
@@ -98,14 +98,21 @@ export default function Orders(props) {
       body: JSON.stringify({ orders }),
       credentials: 'same-origin',
     })
-    .then(response => response.json())
+    .then(response => {
+      if (!response.ok) {
+        throw response;
+      }
+      return response.json()
+    })
     .then(json => {
       setLoading(false);
       setOrdersSubmitted(true);
     })
-    .catch(error => {
+    .catch(error => error.json())
+    .then(errorJson => {
+      console.log(errorJson);
       setLoading(false);
-      setError(error);
+      setError(errorJson);
     });
   }
 
@@ -130,17 +137,18 @@ export default function Orders(props) {
         <tbody>
           {values(orders).map(order =>
             <OrderRow
+              areas={props.areas}
+              error={error && error.validations[order.id]}
               key={order.id}
               order={order}
               position={props.positions[order.position_id]}
-              areas={props.areas}
               updateOrders={updateOrders}
               validOrder={props.valid_orders[order.position_id]}
             />
           )}
         </tbody>
       </table>
-      {error && <div className="notification is-warning is-light">{'asdflkj'}</div>}
+      {error && <div className="notification is-warning is-light">{error.message}</div>}
     </>
   );
 }
