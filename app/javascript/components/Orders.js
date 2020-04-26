@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { useState } from 'react'
 
-function OrderRow({ order, position, areas }) {
+function OrderRow({ order, position, areas, updateOrders }) {
   return (
     <tr>
       <td>{position.type}</td>
@@ -13,6 +13,8 @@ function OrderRow({ order, position, areas }) {
 }
 
 export default function Orders(props) {
+  const [orders, updateOrders] = useState(props.orders);
+
   return (
     <>
       <h2 className="subtitle is-5">Orders</h2>
@@ -27,12 +29,14 @@ export default function Orders(props) {
           </tr>
         </thead>
         <tbody>
-          {props.orders.map((order) =>
+          {orders.map((order) =>
             <OrderRow
               key={order.id}
               order={order}
               position={props.positions[order.position_id]}
-              areas={props.areas}/>
+              areas={props.areas}
+              updateOrders={updateOrders}
+            />
           )}
         </tbody>
       </table>
