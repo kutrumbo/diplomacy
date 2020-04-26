@@ -1,7 +1,17 @@
 h2[class="subtitle is-5"] Orders
-ul
-  - positions.each do |position|
-    li
-      => position.type.capitalize
-      | -
-      =< position.area.name
+table[class="table is-fullwidth"]
+  thead
+    tr
+      th Unit
+      th Territory
+      th Order
+      th From
+      th To
+  tbody
+    - positions.each do |position|
+      tr
+        td = position.type.capitalize
+        td = position.area.name
+        td
+        td
+        td
