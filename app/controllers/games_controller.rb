@@ -11,6 +11,6 @@ class GamesController < ApplicationController
     @user_game = current_user.user_games.find_by(game_id: game_id)
     @turn = @game.current_turn
     @positions = current_user.user_games.find_by(game_id: game_id).positions.where.not(type: nil)
-
+    @valid_orders = OrderService.valid_orders(@user_game)
   end
 end

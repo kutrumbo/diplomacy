@@ -12,6 +12,6 @@ table[class="table is-fullwidth"]
       tr
         td = position.type.capitalize
         td = position.area.name
-        td
-        td
-        td
+        td MOVE
+        td -
+        td = valid_orders[position]['move'].first.name

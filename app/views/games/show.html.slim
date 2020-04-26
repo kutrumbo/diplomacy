@@ -8,10 +8,10 @@ div[class="container"]
           => @turn.type.capitalize
           | -
           =< @turn.year
-    = render partial: 'orders', locals: { positions: @positions }
+    = render partial: 'orders', locals: { positions: @positions, valid_orders: @valid_orders }
     hr
     div[class="columns"]
-      div[class="column is-one-third"]
+      div[class="column is-one-quarter"]
         = render partial: 'players', locals: { game: @game }
       div[class="column"]
         h2[class="subtitle is-5"] Map
