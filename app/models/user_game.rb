@@ -10,4 +10,16 @@ class UserGame < ApplicationRecord
   validates_inclusion_of :power, in: POWER_TYPES
   validates_inclusion_of :state, in: STATES
   validates :power, uniqueness: { scope: :game, message: 'Cannot repeat power within game' }
+
+  after_save :process_turn
+
+  def pending?
+    self.state == 'pending'
+  end
+
+  private
+
+  def process_turn
+    TurnService.process_turn(self.game.current_turn)
+  end
 end

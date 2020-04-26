@@ -21,7 +21,7 @@ class GameServiceTest < ActiveSupport::TestCase
     turns = Turn.all
     assert_equal(1, turns.count)
     first_turn = turns.first
-    assert_equal('fall', first_turn.type)
+    assert_equal('spring', first_turn.type)
     assert_equal(1, first_turn.number)
   end
 

@@ -12,6 +12,8 @@ class Position < ApplicationRecord
   validates_inclusion_of :type, in: POSITION_TYPES, allow_nil: true
 
   scope :with_unit, -> { where.not(type: nil) }
+  # TODO add logic to make sure not retreating
+  scope :owns_supply_center, -> { joins(:area).where(areas: { supply_center: true }) }
 
   def army?
     self.type == 'army'
@@ -19,5 +21,10 @@ class Position < ApplicationRecord
 
   def fleet?
     self.type == 'fleet'
+  end
+
+  def retreat?
+    # TODO
+    false
   end
 end

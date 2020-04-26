@@ -6,7 +6,7 @@ module GameService
       game = Game.create!(name: name)
       assign_powers(game, users)
       create_starting_positions(game)
-      game.turns.create!(type: 'fall', number: 1)
+      game.turns.create!(type: 'spring', number: 1)
     end
   end
 
