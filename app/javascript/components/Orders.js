@@ -90,8 +90,8 @@ export default function Orders(props) {
             <th>Unit</th>
             <th>Territory</th>
             <th>Order</th>
-            <th>From</th>
-            <th>To</th>
+            <th className="order-region-column">From</th>
+            <th className="order-region-column">To</th>
           </tr>
         </thead>
         <tbody>

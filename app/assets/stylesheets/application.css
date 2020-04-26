@@ -30,9 +30,9 @@ html {
   width: 500px;
 }
 
-/* .card-game {
-  width: 180px;
-} */
+.order-region-column {
+  min-width: 150px;
+}
 
 .select-region {
   width: 170px;
