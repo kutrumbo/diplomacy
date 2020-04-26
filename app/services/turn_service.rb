@@ -2,7 +2,7 @@ module TurnService
   def self.process_turn(turn)
     return if turn.nil?
     if complete?(turn)
-      process_orders(turn.orders)
+      process_orders(turn)
       if victory?(turn.reload)
         finish_game(turn.game)
       else
@@ -15,7 +15,26 @@ module TurnService
     !turn.user_games.any?(&:pending?)
   end
 
-  def self.process_orders(orders)
+  def self.process_orders(turn)
+    if turn.attack?
+      process_attack_orders(turn)
+    elsif turn.retreat?
+      process_retreat_orders(turn)
+    else
+      process_build_orders(turn)
+    end
+  end
+
+  def self.process_attack_orders(turn)
+    orders = turn.orders
+    destinations = orders.group_by(&:to)
+  end
+
+  def self.process_retreat_orders(turn)
+    # TODO
+  end
+
+  def self.process_build_orders(turn)
     # TODO
   end
 

@@ -1,14 +1,17 @@
 import React, { useState } from 'react'
 import { capitalize, filter, first, keys, last, map, sortBy, uniq, values } from 'lodash';
 
-function validFromOptions(order, validOrder) {
-  const requiresFrom = order.type === 'support' || order.type === 'convoy';
-  return requiresFrom && sortBy(uniq(map(validOrder[order.type], detail => first(detail))));
+function validFromOptions(order, validOrder, position) {
+  if (order.type === 'support' || order.type === 'convoy') {
+    return sortBy(uniq(map(validOrder[order.type], detail => first(detail))));
+  } else {
+    return [position.area_id];
+  }
 }
 
-function validToOptions(order, validOrder) {
+function validToOptions(order, validOrder, position) {
   if (order.type === 'hold') {
-    return null;
+    return [position.area_id];
   }
   const orderDetails = validOrder[order.type];
   if (order.type === 'move') {
@@ -19,23 +22,30 @@ function validToOptions(order, validOrder) {
 }
 
 function OrderRow({ areas, error, order, position, updateOrders, validOrder }) {
-  const fromOptions = validFromOptions(order, validOrder);
-  const toOptions = validToOptions(order, validOrder);
+  const fromOptions = validFromOptions(order, validOrder, position);
+  const toOptions = validToOptions(order, validOrder, position);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    const updates = { [name]: name === 'type' ? value : parseInt(value, 10) };
+    let updatedOrder = { ...order, [name]: name === 'type' ? value : parseInt(value, 10) };
     if (name === 'type') {
-      updates['from_id'] = null;
+      const updatedFromOptions = validFromOptions(updatedOrder, validOrder, position);
+      const defaultValue = (updatedFromOptions.length === 1) ? updatedFromOptions[0] : '';
+      updatedOrder = { ...updatedOrder, from_id: defaultValue };
     }
     if (name !== 'to_id') {
-      updates['to_id'] = null
+      const updatedToOptions = validToOptions(updatedOrder, validOrder, position);
+      const defaultValue = (updatedToOptions.length === 1) ? updatedToOptions[0] : '';
+      updatedOrder = { ...updatedOrder, to_id: defaultValue };
     }
     updateOrders(prevOrders => ({
       ...prevOrders,
-      [order.id]: { ...prevOrders[order.id], ...updates }
+      [order.id]: updatedOrder,
     }));
   }
+
+  const showFrom = order.type === 'support' || order.type === 'convoy';
+  const showTo = order.type !== 'hold';
 
   return (
     <tr>
@@ -51,10 +61,14 @@ function OrderRow({ areas, error, order, position, updateOrders, validOrder }) {
         </div>
       </td>
       <td>
-        {fromOptions &&
+        {showFrom &&
           <div className={`select is-small${error ? ' is-danger' : ''}`}>
-            <select className="select-region" value={order.from_id || ''} name="from_id" onChange={handleChange}>
-              {!order.from_id && <option value="" disabled>---</option>}
+            <select
+              className="select-region"
+              value={order.from_id}
+              name="from_id"
+              onChange={handleChange}>
+              {(order.from_id === '') && <option value="" disabled>---</option>}
               {fromOptions.map(fromId =>
                 <option key={fromId} value={fromId}>{areas[fromId].name}</option>
               )}
@@ -63,10 +77,14 @@ function OrderRow({ areas, error, order, position, updateOrders, validOrder }) {
         }
       </td>
       <td>
-        {toOptions &&
+        {showTo &&
           <div className={`select is-small${error ? ' is-danger' : ''}`}>
-            <select className="select-region" value={order.to_id || ''} name="to_id" onChange={handleChange}>
-              {!order.to_id && <option value="" disabled>---</option>}
+            <select
+              className="select-region"
+              value={order.to_id}
+              name="to_id"
+              onChange={handleChange}>
+              {(order.to_id === '') && <option value="" disabled>---</option>}
               {toOptions.map(toId =>
                 <option key={toId} value={toId}>{areas[toId].name}</option>
               )}

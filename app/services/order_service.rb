@@ -5,7 +5,7 @@ module OrderService
 
     user_game.positions.with_unit.reduce({}) do |order_map, position|
       position_order_map = {}
-      position_order_map['hold'] = [[nil, nil]]
+      position_order_map['hold'] = [[position.area_id, position.area_id]]
       moves = valid_move_orders(position, all_unit_positions.without(position))
       position_order_map['move'] = moves if moves.present?
       supports = valid_support_orders(position, all_unit_positions.without(position))
@@ -20,7 +20,9 @@ module OrderService
   end
 
   def self.valid_move_orders(current_position, other_unit_positions)
-    possible_paths(current_position, other_unit_positions).map { |path| [nil, path.last.id] }.uniq
+    possible_paths(current_position, other_unit_positions).map do |path|
+      [current_position.area_id, path.last.id]
+    end.uniq
   end
 
   def self.valid_support_orders(current_position, other_unit_positions)

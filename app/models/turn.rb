@@ -15,6 +15,18 @@ class Turn < ApplicationRecord
     1901 + (number / 5)
   end
 
+  def attack?
+    ['spring', 'fall'].include?(self.type)
+  end
+
+  def retreat?
+    ['spring_retreat', 'fall_retreat'].include?(self.type)
+  end
+
+  def build?
+    self.type == 'winter'
+  end
+
   private
 
   def prepare_orders
@@ -23,6 +35,8 @@ class Turn < ApplicationRecord
         type: 'hold',
         user_game: position.user_game,
         position: position,
+        from_id: position.area_id,
+        to_id: position.area_id,
       )
     end
   end
