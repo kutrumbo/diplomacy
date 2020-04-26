@@ -2,15 +2,15 @@ module OrderService
   # output is of form { [position]: { [order_type]: [order_details]} }
   #   where order_details is a single area for move orders and an array
   #   of [from_area, to_area] for support and convoy orders
-  def self.valid_orders(positions)
-    valid_orders = {}
-    positions.reduce({}) do |order_map, position|
+  def self.valid_orders(user_game)
+    all_positions = user_game.game.positions
+
+    user_game.positions.with_unit.reduce({}) do |order_map, position|
       position_order_map = {}
-      position_order_map['hold'] = true
-      position_order_map['move'] = valid_move_orders(position, positions.without(position))
-      position_order_map['support'] = valid_support_orders(position, positions.without(position))
+      position_order_map['move'] = valid_move_orders(position, all_positions.without(position))
+      position_order_map['support'] = valid_support_orders(position, all_positions.without(position))
       if position.fleet?
-        position_order_map['convoy'] = valid_convoy_orders(position, positions.without(position))
+        position_order_map['convoy'] = valid_convoy_orders(position, all_positions.without(position))
       end
       order_map[position] = position_order_map
       order_map
@@ -90,10 +90,14 @@ module OrderService
     current_position.neighboring_areas.each do |neighboring_area|
       paths << [*current_path, neighboring_area] if neighboring_area.land?
 
-      if fleet_position = remaining_positions.find { |p| p.fleet? && p.area == neighboring_area }
+      convoy_position = remaining_positions.find do |position|
+        position.fleet? && position.area.sea? && position.area == neighboring_area
+      end
+
+      if convoy_position.present?
         army_possible_paths(
-          fleet_position,
-          remaining_positions.without(current_position, fleet_position),
+          convoy_position,
+          remaining_positions.without(current_position, convoy_position),
           [*current_path, neighboring_area],
           paths,
         )

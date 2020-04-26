@@ -27,7 +27,7 @@ class OrderServiceTest < ActiveSupport::TestCase
     )
   end
 
-  test "valid_move_orders-army" do
+  test "valid_move_orders-army_coast" do
     greece = Area.find_by_name('Greece')
     aegean_sea = Area.find_by_name('Aegean Sea')
     eastern_med = Area.find_by_name('Eastern Mediterranean')
@@ -43,6 +43,24 @@ class OrderServiceTest < ActiveSupport::TestCase
 
     assert_equal(
       ['Albania', 'Apulia', 'Bulgaria', 'Constantinople', 'Naples', 'Serbia', 'Smyrna', 'Syria', 'Tunis'],
+      orders.pluck(:name).sort,
+    )
+  end
+
+  test "valid_move_orders-army_landlocked" do
+    budapest = Area.find_by_name('Budapest')
+    vienna = Area.find_by_name('Vienna')
+    trieste = Area.find_by_name('Trieste')
+
+    trieste_fleet = create(:position, area: trieste, type: 'fleet')
+    vienna_army = create(:position, area: vienna, type: 'army')
+
+    current_position = create(:position, area: budapest, type: 'army')
+
+    orders = OrderService.valid_move_orders(current_position, [trieste_fleet, vienna_army])
+
+    assert_equal(
+      ['Galicia', 'Rumania', 'Serbia', 'Trieste', 'Vienna'],
       orders.pluck(:name).sort,
     )
   end
