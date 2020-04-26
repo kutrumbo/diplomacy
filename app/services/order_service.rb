@@ -1,20 +1,20 @@
 module OrderService
-  # output is of form { current_position: { order_type: [order_details]} }
+  # output is of form { [position]: { [order_type]: [order_details]} }
   #   where order_details is a single area for move orders and an array
   #   of [from_area, to_area] for support and convoy orders
   def self.valid_orders(positions)
     valid_orders = {}
-    positions.each do |position|
-      order_map = {}
-      order_map['hold'] = true
-      order_map['move'] = valid_move_orders(position, positions.without(position))
-      order_map['support'] = valid_support_orders(position, positions.without(position))
+    positions.reduce({}) do |order_map, position|
+      position_order_map = {}
+      position_order_map['hold'] = true
+      position_order_map['move'] = valid_move_orders(position, positions.without(position))
+      position_order_map['support'] = valid_support_orders(position, positions.without(position))
       if position.fleet?
-        order_map['convoy'] = valid_convoy_orders(position, positions.without(position))
+        position_order_map['convoy'] = valid_convoy_orders(position, positions.without(position))
       end
-      valid_orders[position] = order_map
+      order_map[position] = position_order_map
+      order_map
     end
-    valid_orders
   end
 
   def self.valid_move_orders(current_position, other_positions)
@@ -24,7 +24,10 @@ module OrderService
   def self.valid_support_orders(current_position, other_positions)
     supportable_destinations = support_destinations(current_position)
     other_positions.reduce([]) do |orders, position|
+      # allow supporting a position to hold if it is an accessible area
       orders << [position.area, position.area] if supportable_destinations.include?(position.area)
+
+      # allow supporting any move from another position to an accessible area
       valid_move_orders(position, other_positions.without(current_position)).filter do |area|
         supportable_destinations.include?(area)
       end.each do |target_area|
@@ -36,11 +39,22 @@ module OrderService
 
   def self.valid_convoy_orders(current_position, other_positions)
     raise 'Only fleets may convoy' unless current_position.fleet?
-    if current_position.area.land?
-      []
-    else
-      # TODO
+    return [] if current_position.area.land?
+
+    coastal_army_positions = other_positions.select do |position|
+      position.army? && position.area.coastal?
     end
+
+    # filter for all convoyed paths that go through the current position's area
+    coastal_army_positions.map do |position|
+      remaining_positions = other_positions.without(position).concat([current_position])
+      possible_paths(position, remaining_positions).select do |path|
+        path.include?(current_position.area)
+      end.map do |path|
+        # only want start and destination areas
+        [path.first, path.last]
+      end.uniq
+    end.flatten(1)
   end
 
   private
@@ -58,6 +72,8 @@ module OrderService
       fleet_possible_paths(position)
     else
       army_possible_paths(position, other_positions, [position.area])
+    end.reject do |path|
+      path.first == path.last
     end
   end
 

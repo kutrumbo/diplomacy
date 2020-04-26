@@ -11,6 +11,10 @@ class Position < ApplicationRecord
 
   validates_inclusion_of :type, in: POSITION_TYPES, allow_nil: true
 
+  def army?
+    self.type == 'army'
+  end
+
   def fleet?
     self.type == 'fleet'
   end

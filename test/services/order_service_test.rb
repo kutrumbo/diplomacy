@@ -33,16 +33,17 @@ class OrderServiceTest < ActiveSupport::TestCase
     eastern_med = Area.find_by_name('Eastern Mediterranean')
     ionian_sea = Area.find_by_name('Ionian Sea')
 
-    current_position = create(:position, area: greece, type: 'army')
     aegean_fleet = create(:position, area: aegean_sea, type: 'fleet')
     eastern_med_fleet = create(:position, area: eastern_med, type: 'fleet')
     ionian_sea_fleet = create(:position, area: ionian_sea, type: 'fleet')
 
+    current_position = create(:position, area: greece, type: 'army')
+
     orders = OrderService.valid_move_orders(current_position, [aegean_fleet, eastern_med_fleet, ionian_sea_fleet])
 
     assert_equal(
-      ['Albania', 'Apulia', 'Bulgaria', 'Constantinople', 'Greece', 'Naples', 'Serbia', 'Smyrna', 'Syria', 'Tunis'],
-      orders.pluck(:name).sort
+      ['Albania', 'Apulia', 'Bulgaria', 'Constantinople', 'Naples', 'Serbia', 'Smyrna', 'Syria', 'Tunis'],
+      orders.pluck(:name).sort,
     )
   end
 
@@ -85,6 +86,28 @@ class OrderServiceTest < ActiveSupport::TestCase
 
     assert_equal(
       [['Aegean Sea', 'Aegean Sea'], ['Aegean Sea', 'Constantinople'], ['Aegean Sea', 'Greece'], ['Ankara', 'Constantinople']],
+      orders.map { |order| order.map(&:name) }.sort,
+    )
+  end
+
+  test "valid_convoy_orders" do
+    greece = Area.find_by_name('Greece')
+    tunis = Area.find_by_name('Tunis')
+    aegean_sea = Area.find_by_name('Aegean Sea')
+    eastern_med = Area.find_by_name('Eastern Mediterranean')
+    ionian_sea = Area.find_by_name('Ionian Sea')
+
+    eastern_med_fleet = create(:position, area: eastern_med, type: 'fleet')
+    ionian_sea_fleet = create(:position, area: ionian_sea, type: 'fleet')
+    greece_army = create(:position, area: greece, type: 'army')
+    tunis_army = create(:position, area: tunis, type: 'army')
+
+    current_position = create(:position, area: aegean_sea, type: 'fleet')
+
+    orders = OrderService.valid_convoy_orders(current_position, [eastern_med_fleet, greece_army, ionian_sea_fleet, tunis_army])
+
+    assert_equal(
+      [['Greece', 'Albania'], ['Greece', 'Apulia'], ['Greece', 'Bulgaria'], ['Greece', 'Constantinople'], ['Greece', 'Naples'], ['Greece', 'Smyrna'], ['Greece', 'Syria'], ['Greece', 'Tunis'], ['Tunis', 'Bulgaria'], ['Tunis', 'Constantinople'], ['Tunis', 'Greece'], ['Tunis', 'Smyrna'], ['Tunis', 'Syria']],
       orders.map { |order| order.map(&:name) }.sort,
     )
   end
