@@ -1,14 +1,6 @@
 require 'test_helper'
 
 class AreaServiceTest < ActiveSupport::TestCase
-  parallelize_setup do |worker|
-      AreaService.seed_areas
-  end
-
-  parallelize_teardown do |worker|
-    AreaService.teardown
-  end
-
   test "coasts" do
     assert_equal(42, Area.coastal.count)
   end

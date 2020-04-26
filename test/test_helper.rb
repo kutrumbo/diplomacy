@@ -10,4 +10,11 @@ class ActiveSupport::TestCase
   include FactoryBot::Syntax::Methods
 
   # Add more helper methods to be used by all tests here...
+  parallelize_setup do |worker|
+    AreaService.seed_areas
+  end
+
+  parallelize_teardown do |worker|
+    AreaService.teardown
+  end
 end

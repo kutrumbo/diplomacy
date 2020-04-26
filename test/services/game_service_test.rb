@@ -1,14 +1,6 @@
 require 'test_helper'
 
 class GameServiceTest < ActiveSupport::TestCase
-  parallelize_setup do |worker|
-      AreaService.seed_areas
-  end
-
-  parallelize_teardown do |worker|
-    AreaService.teardown
-  end
-
   test "validates number of users" do
     assert_raise RuntimeError do
       GameService.initiate_game('foo', create_list(:user, 6))
@@ -34,8 +26,9 @@ class GameServiceTest < ActiveSupport::TestCase
   end
 
   test "creates starting positions" do
-    GameService.initiate_game('foo', create_list(:user, 7))
+    GameService.initiate_game('bar', create_list(:user, 7))
 
+    assert_equal(42, Game.find_by_name('bar').positions.count)
     assert_equal(42, Position.count)
   end
 end
