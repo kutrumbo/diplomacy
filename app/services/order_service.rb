@@ -1,13 +1,11 @@
 module OrderService
-  # output is of form { [position]: { [order_type]: [order_details]} }
-  #   where order_details is a single area for move orders and an array
-  #   of [from_area, to_area] for support and convoy orders
+  # output is of form { [position_id]: { [order_type]: [from_id, to_id]} }
   def self.valid_orders(user_game)
     all_unit_positions = user_game.game.positions.with_unit
 
     user_game.positions.with_unit.reduce({}) do |order_map, position|
       position_order_map = {}
-      position_order_map['hold'] = [true]
+      position_order_map['hold'] = [nil, nil]
       moves = valid_move_orders(position, all_unit_positions.without(position))
       position_order_map['move'] = moves if moves.present?
       supports = valid_support_orders(position, all_unit_positions.without(position))
@@ -22,20 +20,20 @@ module OrderService
   end
 
   def self.valid_move_orders(current_position, other_unit_positions)
-    possible_paths(current_position, other_unit_positions).map(&:last).uniq
+    possible_paths(current_position, other_unit_positions).map { |path| [nil, path.last.id] }.uniq
   end
 
   def self.valid_support_orders(current_position, other_unit_positions)
     support_areas = supportable_areas(current_position)
     other_unit_positions.reduce([]) do |orders, position|
       # allow supporting a position to hold if it is an accessible area
-      orders << [position.area, position.area] if support_areas.include?(position.area)
+      orders << [position.area.id, position.area.id] if support_areas.include?(position.area)
 
       # allow supporting any move from another position to an accessible area
-      valid_move_orders(position, other_unit_positions.without(position, current_position)).filter do |area|
-        support_areas.include?(area)
-      end.each do |target_area|
-        orders << [position.area, target_area]
+      valid_move_orders(position, other_unit_positions.without(position, current_position)).filter do |details|
+        support_areas.map(&:id).include?(details.last)
+      end.each do |details|
+        orders << [position.area.id, details.last]
       end
       orders
     end
@@ -56,7 +54,7 @@ module OrderService
         path.include?(current_position.area)
       end.map do |path|
         # only want start and destination areas
-        [path.first, path.last]
+        [path.first.id, path.last.id]
       end.uniq
     end.flatten(1)
   end

@@ -3,7 +3,7 @@ import { capitalize, filter, first, keys, last, map, sortBy, uniq, values } from
 
 function validFromOptions(order, validOrder) {
   const requiresFrom = order.type === 'support' || order.type === 'convoy';
-  return requiresFrom && sortBy(uniq(map(validOrder[order.type], detail => first(detail).id)));
+  return requiresFrom && sortBy(uniq(map(validOrder[order.type], detail => first(detail))));
 }
 
 function validToOptions(order, validOrder) {
@@ -12,10 +12,10 @@ function validToOptions(order, validOrder) {
   }
   const orderDetails = validOrder[order.type];
   if (order.type === 'move') {
-    return sortBy(map(orderDetails, detail => detail.id));
+    return sortBy(map(orderDetails, detail => last(detail)));
   }
-  const validPaths = filter(orderDetails, detail => first(detail).id === order.from_id);
-  return sortBy(uniq(map(validPaths, detail => last(detail).id)));
+  const validPaths = filter(orderDetails, detail => first(detail) === order.from_id);
+  return sortBy(uniq(map(validPaths, detail => last(detail))));
 }
 
 function OrderRow({ areas, order, position, updateOrders, validOrder }) {

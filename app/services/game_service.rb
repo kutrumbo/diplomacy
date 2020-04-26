@@ -15,7 +15,7 @@ module GameService
   def self.assign_powers(game, users)
     powers = UserGame::POWER_TYPES.dup
     game.user_games << users.map do |user|
-      UserGame.create!(user: user, game: game, power: powers.delete(powers.sample))
+      UserGame.create!(user: user, game: game, power: powers.delete(powers.sample), state: 'pending')
     end
   end
 

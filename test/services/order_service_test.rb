@@ -8,8 +8,8 @@ class OrderServiceTest < ActiveSupport::TestCase
     orders = OrderService.valid_move_orders(current_position, [])
 
     assert_equal(
-      ['Aegean Sea', 'Albania', 'Bulgaria', 'Ionian Sea'],
-      orders.pluck(:name).sort,
+      [[nil, 'Aegean Sea'], [nil, 'Albania'], [nil, 'Bulgaria'], [nil, 'Ionian Sea']],
+      parse_orders(orders),
     )
   end
 
@@ -22,8 +22,8 @@ class OrderServiceTest < ActiveSupport::TestCase
     orders = OrderService.valid_move_orders(current_position, [])
 
     assert_equal(
-      ['Aegean Sea', 'Constantinople', 'Greece'],
-      orders.pluck(:name).sort,
+      [[nil, 'Aegean Sea'], [nil, 'Constantinople'], [nil, 'Greece']],
+      parse_orders(orders),
     )
   end
 
@@ -42,8 +42,8 @@ class OrderServiceTest < ActiveSupport::TestCase
     orders = OrderService.valid_move_orders(current_position, [aegean_fleet, eastern_med_fleet, ionian_sea_fleet])
 
     assert_equal(
-      ['Albania', 'Apulia', 'Bulgaria', 'Constantinople', 'Naples', 'Serbia', 'Smyrna', 'Syria', 'Tunis'],
-      orders.pluck(:name).sort,
+      [[nil, 'Albania'], [nil, 'Apulia'], [nil, 'Bulgaria'], [nil, 'Constantinople'], [nil, 'Naples'], [nil, 'Serbia'], [nil, 'Smyrna'], [nil, 'Syria'], [nil, 'Tunis']],
+      parse_orders(orders),
     )
   end
 
@@ -60,8 +60,8 @@ class OrderServiceTest < ActiveSupport::TestCase
     orders = OrderService.valid_move_orders(current_position, [trieste_fleet, vienna_army])
 
     assert_equal(
-      ['Galicia', 'Rumania', 'Serbia', 'Trieste', 'Vienna'],
-      orders.pluck(:name).sort,
+      [[nil, 'Galicia'], [nil, 'Rumania'], [nil, 'Serbia'], [nil, 'Trieste'], [nil, 'Vienna']],
+      parse_orders(orders),
     )
   end
 
@@ -83,7 +83,7 @@ class OrderServiceTest < ActiveSupport::TestCase
 
     assert_equal(
       [['Aegean Sea', 'Bulgaria'], ['Black Sea', 'Bulgaria'], ['Black Sea', 'Sevastopol'], ['Budapest', 'Budapest'], ['Budapest', 'Galicia'], ['Budapest', 'Serbia'], ['Warsaw', 'Galicia'], ['Warsaw', 'Ukraine']],
-      orders.map { |order| order.map(&:name) }.sort,
+      parse_orders(orders),
     )
   end
 
@@ -104,7 +104,7 @@ class OrderServiceTest < ActiveSupport::TestCase
 
     assert_equal(
       [['Aegean Sea', 'Aegean Sea'], ['Aegean Sea', 'Constantinople'], ['Aegean Sea', 'Greece'], ['Ankara', 'Constantinople']],
-      orders.map { |order| order.map(&:name) }.sort,
+      parse_orders(orders),
     )
   end
 
@@ -126,7 +126,13 @@ class OrderServiceTest < ActiveSupport::TestCase
 
     assert_equal(
       [['Greece', 'Albania'], ['Greece', 'Apulia'], ['Greece', 'Bulgaria'], ['Greece', 'Constantinople'], ['Greece', 'Naples'], ['Greece', 'Smyrna'], ['Greece', 'Syria'], ['Greece', 'Tunis'], ['Tunis', 'Bulgaria'], ['Tunis', 'Constantinople'], ['Tunis', 'Greece'], ['Tunis', 'Smyrna'], ['Tunis', 'Syria']],
-      orders.map { |order| order.map(&:name) }.sort,
+      parse_orders(orders),
     )
+  end
+
+  def parse_orders(orders)
+    orders.map do |order|
+      [order.first && Area.find(order.first).name, order.last && Area.find(order.last).name]
+    end.sort
   end
 end
