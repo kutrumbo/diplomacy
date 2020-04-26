@@ -79,11 +79,44 @@ function OrderRow({ areas, order, position, updateOrders, validOrder }) {
 }
 
 export default function Orders(props) {
+  const csrfToken = document.querySelector('[name=csrf-token]').content;
+  const [ordersSubmitted, setOrdersSubmitted] = useState(props.user_game.state === 'confirmed');
   const [orders, updateOrders] = useState(props.orders);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const submitOrders = (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    fetch(`/games/${props.user_game.game_id}/orders`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken,
+      },
+      body: JSON.stringify({ orders }),
+      credentials: 'same-origin',
+    })
+    .then(response => response.json())
+    .then(json => {
+      setLoading(false);
+      setOrdersSubmitted(true);
+    })
+    .catch(error => {
+      setLoading(false);
+      setError(error);
+    });
+  }
 
   return (
     <>
-      <h2 className="subtitle is-5">Orders</h2>
+      <h2 className="subtitle is-5 is-pulled-left">Orders</h2>
+      <button
+        className={`button is-primary is-pulled-right${loading ? ' is-loading' : ''}`}
+        onClick={submitOrders}>
+        { ordersSubmitted ? 'Resubmit' : 'Submit' }
+      </button>
       <table className="table is-fullwidth">
         <thead>
           <tr>
@@ -107,6 +140,7 @@ export default function Orders(props) {
           )}
         </tbody>
       </table>
+      {error && <div className="notification is-warning is-light">{'asdflkj'}</div>}
     </>
   );
 }

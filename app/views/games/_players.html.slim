@@ -3,4 +3,4 @@
 ul
   - game.user_games.each do |user_game|
     li[class="#{'has-text-weight-bold' if user_game == @user_game}"]
-      = "#{user_game.user.name} - #{user_game.power.capitalize}"
+      = "#{user_game.user.name} - #{user_game.power.capitalize} [#{user_game.state}]"

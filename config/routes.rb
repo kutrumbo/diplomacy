@@ -4,7 +4,9 @@ Rails.application.routes.draw do
 
   resources :sessions, only: [:new, :create, :destroy]
   resources :users, only: [:new, :create]
-  resources :games, only: [:index, :show]
+  resources :games, only: [:index, :show] do
+    put 'orders', to: 'orders#update'
+  end
 
   get 'signup', to: 'users#new', as: 'signup'
   get 'login', to: 'sessions#new', as: 'login'
