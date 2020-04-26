@@ -29,4 +29,40 @@ class TurnServiceTest < ActiveSupport::TestCase
 
     assert_not(TurnService.victory?(game))
   end
+
+  test "create_support_map" do
+    aegean_sea = Area.find_by_name('Aegean Sea')
+    albania = Area.find_by_name('Albania')
+    bulgaria = Area.find_by_name('Bulgaria')
+    greece = Area.find_by_name('Greece')
+    ionian_sea = Area.find_by_name('Ionian Sea')
+    serbia = Area.find_by_name('Serbia')
+    tunis = Area.find_by_name('Tunis')
+
+    aegean_sea_position = create(:position, area: aegean_sea, type: 'fleet')
+    albania_position = create(:position, area: albania, type: 'army')
+    bulgaria_position = create(:position, area: bulgaria, type: 'army')
+    greece_position = create(:position, area: greece, type: 'army')
+    ionian_sea_position = create(:position, area: ionian_sea, type: 'fleet')
+    serbia_position = create(:position, area: serbia, type: 'army')
+    tunis_position = create(:position, area: tunis, type: 'army')
+
+    create(:order, type: 'support', from: tunis, to: greece, position: aegean_sea_position)
+    create(:order, type: 'convoy', from: tunis, to: greece, position: ionian_sea_position)
+    create(:order, type: 'support', from: bulgaria, to: greece, position: serbia_position)
+    albania_order = create(:order, type: 'move', from: albania, to: greece, position: albania_position)
+    bulgaria_order = create(:order, type: 'move', from: bulgaria, to: greece, position: bulgaria_position)
+    greece_order = create(:order, type: 'hold', from: greece, to: greece, position: greece_position)
+    tunis_order = create(:order, type: 'move', from: tunis, to: greece, position: tunis_position)
+
+    support_map = TurnService.create_support_map(Order.all)
+
+    assert_equal(1, support_map.keys.count)
+    assert_equal(greece, support_map.keys.first)
+    assert_equal(4, support_map[greece].keys.count)
+    assert_equal(0, support_map[greece][albania_order].count)
+    assert_equal(1, support_map[greece][bulgaria_order].count)
+    assert_equal(0, support_map[greece][greece_order].count)
+    assert_equal(1, support_map[greece][tunis_order].count)
+  end
 end
