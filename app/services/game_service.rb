@@ -5,8 +5,8 @@ module GameService
     ActiveRecord::Base.transaction do
       game = Game.create!(name: name)
       assign_powers(game, users)
-      Turn.create!(type: 'fall', number: 1, game: game)
       create_starting_positions(game)
+      game.turns.create!(type: 'fall', number: 1)
     end
   end
 

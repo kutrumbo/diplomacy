@@ -8,7 +8,7 @@ div[class="container"]
           => @turn.type.capitalize
           | -
           =< @turn.year
-    = react_component('Orders', { positions: @positions, areas: @areas })
+    = react_component('Orders', { areas: @areas, orders: @orders, positions: @positions })
     hr
     div[class="columns"]
       div[class="column is-one-quarter"]
