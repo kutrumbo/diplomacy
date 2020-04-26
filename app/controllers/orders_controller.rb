@@ -10,7 +10,7 @@ class OrdersController < ApplicationController
     else
       ActiveRecord::Base.transaction do
         Order.update(orders.keys, orders.values)
-        @user_game.update_attribute(:state, 'confirmed')
+        @user_game.update!(state: 'confirmed')
       end
       render json: Order.find(orders.keys)
     end
