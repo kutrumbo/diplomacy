@@ -61,7 +61,96 @@ module OrderService
     end.flatten(1)
   end
 
+  def self.resolve(order, orders)
+    case order.type
+    when 'move'
+      resolve_move(order, orders)
+    when 'hold'
+      resolve_hold(order, orders)
+    when 'support'
+      resolve_support(order, orders)
+    when 'convoy'
+      :not_implemented # TODO
+    when 'build'
+      :not_implemented # TODO
+    when 'retreat'
+      :not_implemented # TODO
+    else
+      raise 'Invalid order type'
+    end
+  end
+
+  def self.resolve_move(order, orders)
+    return resolve_hold(order, orders) if attacking_pressure(order.position.area, orders).present?
+
+    attack_hash = attacking_pressure(order.to, orders)
+    # order bounces if it was not part of the max strength attacks on the area
+    return [:bounced] unless attack_hash.keys.include?(order)
+
+    attack_strength = attack_hash[order].size + 1
+    attack_succeeds = attack_strength > hold_support(order.to, orders).size
+    # resolved if attack succeeds and it is only attack order, otherwise move is bounced
+    attack_succeeds && attack_hash.keys == [order] ? [:resolved] : [:bounced]
+  end
+
+  def self.resolve_hold(order, orders)
+    attack_hash = attacking_pressure(order.position.area, orders)
+    return [:resolved] if attack_hash.empty?
+
+    attack_strength = attack_hash.values.first.size + 1
+    if attack_strength > hold_support(order.position.area, orders).size
+      if attack_hash.size == 1
+        # TODO: make sure country cannot dislodge itself
+        return [:dislodged, attack_hash.keys.first]
+      end
+      # if multiple attackers, attacks bounce and position holds
+    end
+    # TODO: convoy attack can not cut support to a fleet supporting another convoying fleet
+    order.hold? ? [:resolved] : [:cut, attack_hash.keys.first]
+  end
+
+  def self.resolve_support(order, orders)
+    corresponding_order = orders.find do |o|
+      (o.move? || o.hold?) && order.from == o.from && order.to == o.to
+    end
+    return [:invalid] unless corresponding_order.present?
+    attack_hash = attacking_pressure(order.position.area, orders)
+    attack_hash.present? ? resolve_hold(order, orders) : [:resolved]
+  end
+
   private
+
+  def self.hold_support(area, orders)
+    orders.select do |o|
+      order_originates_at_position = o.position.area == area
+      order_supports_area = o.support? && o.from == area && o.to == area && orders.any? { |i| !i.move? && i.position.area == area }
+
+      order_originates_at_position || order_supports_area
+    end
+  end
+
+  # returns hash of { attack_order: [supporting_orders] } excluding the less supported attacks
+  def self.attacking_pressure(area, orders)
+    orders.select do |o|
+      o.move? && o.to == area && attacking_pressure(o.position.area, orders.without(o)).empty?
+    end.reduce({}) do |attack_hash, o|
+      support = attack_support(o, orders.without(o))
+      prev_support_level = (attack_hash.values.first || []).size
+      return Hash[o, support] if support.size > prev_support_level
+      attack_hash[o] = support if support.size == prev_support_level
+      attack_hash
+    end
+  end
+
+  def self.attack_support(order, orders)
+    orders.select do |o|
+      order_supports_attack = o.support? && o.from == order.from && o.to == order.to
+      order_not_cut = attacking_pressure(o.position.area, orders.without(o)).keys.any? do |attack_order|
+        attack_order.from == order.to
+      end
+      order_supports_attack && order_not_cut
+    end
+  end
 
   def self.supportable_areas(position)
     if position.fleet?

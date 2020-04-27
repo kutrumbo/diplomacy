@@ -9,7 +9,7 @@ class OrderServiceTest < ActiveSupport::TestCase
 
     assert_equal(
       [['Greece', 'Aegean Sea'], ['Greece', 'Albania'], ['Greece', 'Bulgaria'], ['Greece', 'Ionian Sea']],
-      parse_orders(orders),
+      parse_order_results(orders),
     )
   end
 
@@ -23,7 +23,7 @@ class OrderServiceTest < ActiveSupport::TestCase
 
     assert_equal(
       [['Bulgaria', 'Aegean Sea'], ['Bulgaria', 'Constantinople'], ['Bulgaria', 'Greece']],
-      parse_orders(orders),
+      parse_order_results(orders),
     )
   end
 
@@ -43,7 +43,7 @@ class OrderServiceTest < ActiveSupport::TestCase
 
     assert_equal(
       [['Greece', 'Albania'], ['Greece', 'Apulia'], ['Greece', 'Bulgaria'], ['Greece', 'Constantinople'], ['Greece', 'Naples'], ['Greece', 'Serbia'], ['Greece', 'Smyrna'], ['Greece', 'Syria'], ['Greece', 'Tunis']],
-      parse_orders(orders),
+      parse_order_results(orders),
     )
   end
 
@@ -61,7 +61,7 @@ class OrderServiceTest < ActiveSupport::TestCase
 
     assert_equal(
       [['Budapest', 'Galicia'], ['Budapest', 'Rumania'], ['Budapest', 'Serbia'], ['Budapest', 'Trieste'], ['Budapest', 'Vienna']],
-      parse_orders(orders),
+      parse_order_results(orders),
     )
   end
 
@@ -83,7 +83,7 @@ class OrderServiceTest < ActiveSupport::TestCase
 
     assert_equal(
       [['Aegean Sea', 'Bulgaria'], ['Black Sea', 'Bulgaria'], ['Black Sea', 'Sevastopol'], ['Budapest', 'Budapest'], ['Budapest', 'Galicia'], ['Budapest', 'Serbia'], ['Warsaw', 'Galicia'], ['Warsaw', 'Ukraine']],
-      parse_orders(orders),
+      parse_order_results(orders),
     )
   end
 
@@ -104,7 +104,7 @@ class OrderServiceTest < ActiveSupport::TestCase
 
     assert_equal(
       [['Aegean Sea', 'Aegean Sea'], ['Aegean Sea', 'Constantinople'], ['Aegean Sea', 'Greece'], ['Ankara', 'Constantinople']],
-      parse_orders(orders),
+      parse_order_results(orders),
     )
   end
 
@@ -126,11 +126,65 @@ class OrderServiceTest < ActiveSupport::TestCase
 
     assert_equal(
       [['Greece', 'Albania'], ['Greece', 'Apulia'], ['Greece', 'Bulgaria'], ['Greece', 'Constantinople'], ['Greece', 'Naples'], ['Greece', 'Smyrna'], ['Greece', 'Syria'], ['Greece', 'Tunis'], ['Tunis', 'Bulgaria'], ['Tunis', 'Constantinople'], ['Tunis', 'Greece'], ['Tunis', 'Smyrna'], ['Tunis', 'Syria']],
-      parse_orders(orders),
+      parse_order_results(orders),
     )
   end
 
-  def parse_orders(orders)
+  test "resolve-invalid_support" do
+    albania = Area.find_by_name('Albania')
+    bulgaria = Area.find_by_name('Bulgaria')
+    greece = Area.find_by_name('Greece')
+
+    albania_position = create(:position, area: albania, type: 'army')
+
+    order = create(:order, type: 'support', from: bulgaria, to: greece, position: albania_position)
+
+    assert_equal([:invalid], OrderService.resolve(order, Order.all))
+  end
+
+  test "resolve-resolved_support" do
+    budapest = Area.find_by_name('Budapest')
+    bulgaria = Area.find_by_name('Bulgaria')
+    rumania = Area.find_by_name('Rumania')
+
+    budapest_position = create(:position, area: budapest, type: 'army')
+    bulgaria_position = create(:position, area: bulgaria, type: 'army')
+    rumania_position = create(:position, area: rumania, type: 'army')
+
+    attack = create(:order, type: 'move', from: bulgaria, to: rumania, position: bulgaria_position)
+    support = create(:order, type: 'support', from: bulgaria, to: rumania, position: budapest_position)
+    dislodged = create(:order, type: 'move', from: rumania, to: budapest, position: rumania_position)
+
+    assert_equal([:resolved], OrderService.resolve(attack, Order.all))
+    assert_equal([:resolved], OrderService.resolve(support, Order.all))
+    assert_equal([:dislodged, attack], OrderService.resolve(dislodged, Order.all))
+  end
+
+  test "resolve-cut_support" do
+    budapest = Area.find_by_name('Budapest')
+    bulgaria = Area.find_by_name('Bulgaria')
+    rumania = Area.find_by_name('Rumania')
+    serbia = Area.find_by_name('Serbia')
+
+    budapest_position = create(:position, area: budapest, type: 'army')
+    bulgaria_position = create(:position, area: bulgaria, type: 'army')
+    serbia_position = create(:position, area: serbia, type: 'army')
+    rumania_position = create(:position, area: rumania, type: 'army')
+
+    attack = create(:order, type: 'move', from: bulgaria, to: rumania, position: bulgaria_position)
+    cutter = create(:order, type: 'move', from: serbia, to: budapest, position: serbia_position)
+    support = create(:order, type: 'support', from: bulgaria, to: rumania, position: budapest_position)
+    hold = create(:order, type: 'hold', from: rumania, to: rumania, position: rumania_position)
+
+    assert_equal([:bounced], OrderService.resolve(attack, Order.all))
+    assert_equal([:bounced], OrderService.resolve(cutter, Order.all))
+    assert_equal([:cut, cutter], OrderService.resolve(support, Order.all))
+    assert_equal([:resolved], OrderService.resolve(hold, Order.all))
+  end
+
+  private
+
+  def parse_order_results(orders)
     orders.map do |order|
       [order.first && Area.find(order.first).name, order.last && Area.find(order.last).name]
     end.sort

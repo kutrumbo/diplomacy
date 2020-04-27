@@ -11,4 +11,26 @@ class Order < ApplicationRecord
   belongs_to :to, class_name: 'Area', optional: true
 
   validates_inclusion_of :type, in: ORDER_TYPES
+
+  scope :convoy, -> { where(type: 'convoy') }
+  scope :move, -> { where(type: 'move') }
+  scope :support, -> { where(type: 'support') }
+  scope :from_area, -> (from) { where(from: from) }
+  scope :to_area, -> (to) { where(to: to) }
+
+  def convoy?
+    self.type == 'convoy'
+  end
+
+  def hold?
+    self.type == 'hold'
+  end
+
+  def move?
+    self.type == 'move'
+  end
+
+  def support?
+    self.type == 'support'
+  end
 end
