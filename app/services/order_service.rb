@@ -70,7 +70,7 @@ module OrderService
     when 'support'
       resolve_support(order, orders)
     when 'convoy'
-      :not_implemented # TODO
+      resolve_convoy(order, orders)
     when 'build'
       :not_implemented # TODO
     when 'retreat'
@@ -81,7 +81,18 @@ module OrderService
   end
 
   def self.resolve_move(order, orders)
-    # TODO: check if convoyed and convoy is disrupted
+    if requires_convoy?(order.from, order.to)
+      convoying_orders = orders.select do |o|
+        o.convoy? && o.from == order.from && o.to == order.to
+      end
+      return [:invalid] if convoying_orders.empty?
+
+      # TODO: need to support multiple convoy routes
+      convoys_disrupted = convoying_orders.any? do |o|
+        resolve_hold(o, orders) != [:resolved]
+      end
+      return [:cancelled] if convoys_disrupted
+    end
 
     attack_hash = attacking_pressure(order.to, orders)
     attack_succeeds = attack_hash.key?(order) && (attack_hash[order].size + 1 > hold_support(order.to, orders).size)
@@ -100,7 +111,6 @@ module OrderService
     if orders.any? { |o| !o.move? && o.position.area == order.to && o.power == order.power }
       return [:bounced]
     end
-
     [:resolved]
   end
 
@@ -136,7 +146,28 @@ module OrderService
     attack_hash.present? ? resolve_hold(order, orders) : [:resolved]
   end
 
+  def self.resolve_convoy(order, orders)
+    unless orders.any? { |o| o.move? && o.from == order.from && o.to == order.to }
+      return [:invalid]
+    end
+
+    supporting_convoys = orders.without(order).select do |o|
+      o.convoy? && o.from == order.from && o.to == order.to
+    end
+    convoys_disrupted = supporting_convoys.any? do |o|
+      resolve_hold(o, orders) != [:resolved]
+    end
+    return [:cancelled] if convoys_disrupted
+
+    resolve_hold(order, orders)
+  end
+
   private
+
+  def self.requires_convoy?(from, to)
+    # TODO: does not handle convoying to adjacent coast
+    !from.neighboring_areas.include?(to)
+  end
 
   def self.hold_support(area, orders)
     orders.select do |o|

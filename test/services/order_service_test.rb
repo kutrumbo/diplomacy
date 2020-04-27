@@ -143,17 +143,19 @@ class OrderServiceTest < ActiveSupport::TestCase
   end
 
   test "resolve-resolved_support" do
+    england = create(:user_game, power: 'england')
+    germany = create(:user_game, power: 'germany')
     budapest = Area.find_by_name('Budapest')
     bulgaria = Area.find_by_name('Bulgaria')
     rumania = Area.find_by_name('Rumania')
 
-    budapest_position = create(:position, area: budapest, type: 'army')
-    bulgaria_position = create(:position, area: bulgaria, type: 'army')
-    rumania_position = create(:position, area: rumania, type: 'army')
+    budapest_position = create(:position, area: budapest, type: 'army', user_game: england)
+    bulgaria_position = create(:position, area: bulgaria, type: 'army', user_game: england)
+    rumania_position = create(:position, area: rumania, type: 'army', user_game: germany)
 
-    attack = create(:order, type: 'move', from: bulgaria, to: rumania, position: bulgaria_position)
-    support = create(:order, type: 'support', from: bulgaria, to: rumania, position: budapest_position)
-    dislodged = create(:order, type: 'move', from: rumania, to: budapest, position: rumania_position)
+    attack = create(:order, type: 'move', from: bulgaria, to: rumania, position: bulgaria_position, user_game: england)
+    support = create(:order, type: 'support', from: bulgaria, to: rumania, position: budapest_position, user_game: england)
+    dislodged = create(:order, type: 'move', from: rumania, to: budapest, position: rumania_position, user_game: germany)
 
     assert_equal([:resolved], OrderService.resolve(attack, Order.all))
     assert_equal([:resolved], OrderService.resolve(support, Order.all))
@@ -184,30 +186,32 @@ class OrderServiceTest < ActiveSupport::TestCase
 
   test "resolve-move_swap" do
     budapest = Area.find_by_name('Budapest')
-    bulgaria = Area.find_by_name('Bulgaria')
+    serbia = Area.find_by_name('Serbia')
 
     budapest_position = create(:position, area: budapest, type: 'army')
-    bulgaria_position = create(:position, area: bulgaria, type: 'army')
+    serbia_position = create(:position, area: serbia, type: 'army')
 
-    move1 = create(:order, type: 'move', from: budapest, to: bulgaria, position: budapest_position)
-    move2 = create(:order, type: 'move', from: bulgaria, to: budapest, position: bulgaria_position)
+    move1 = create(:order, type: 'move', from: budapest, to: serbia, position: budapest_position)
+    move2 = create(:order, type: 'move', from: serbia, to: budapest, position: serbia_position)
 
     assert_equal([:bounced], OrderService.resolve(move1, Order.all))
     assert_equal([:bounced], OrderService.resolve(move2, Order.all))
   end
 
   test "resolve-supported_attack" do
+    england = create(:user_game, power: 'england')
+    germany = create(:user_game, power: 'germany')
     budapest = Area.find_by_name('Budapest')
     bulgaria = Area.find_by_name('Bulgaria')
     rumania = Area.find_by_name('Rumania')
 
-    budapest_position = create(:position, area: budapest, type: 'army')
-    bulgaria_position = create(:position, area: bulgaria, type: 'army')
-    rumania_position = create(:position, area: rumania, type: 'army')
+    budapest_position = create(:position, area: budapest, type: 'army', user_game: england)
+    bulgaria_position = create(:position, area: bulgaria, type: 'army', user_game: england)
+    rumania_position = create(:position, area: rumania, type: 'army', user_game: germany)
 
-    attack = create(:order, type: 'move', from: bulgaria, to: rumania, position: bulgaria_position)
-    support = create(:order, type: 'support', from: bulgaria, to: rumania, position: budapest_position)
-    hold = create(:order, type: 'hold', from: rumania, to: rumania, position: rumania_position)
+    attack = create(:order, type: 'move', from: bulgaria, to: rumania, position: bulgaria_position, user_game: england)
+    support = create(:order, type: 'support', from: bulgaria, to: rumania, position: budapest_position, user_game: england)
+    hold = create(:order, type: 'hold', from: rumania, to: rumania, position: rumania_position, user_game: germany)
 
     assert_equal([:resolved], OrderService.resolve(attack, Order.all))
     assert_equal([:resolved], OrderService.resolve(support, Order.all))
@@ -246,6 +250,76 @@ class OrderServiceTest < ActiveSupport::TestCase
     assert_equal([:bounced], OrderService.resolve(attack, Order.all))
     assert_equal([:resolved], OrderService.resolve(support, Order.all))
     assert_equal([:resolved], OrderService.resolve(hold, Order.all))
+  end
+
+  test "resolve-convoy" do
+    tunis = Area.find_by_name('Tunis')
+    ionian_sea = Area.find_by_name('Ionian Sea')
+    aegean_sea = Area.find_by_name('Aegean Sea')
+    smyrna = Area.find_by_name('Smyrna')
+
+    tunis_position = create(:position, area: tunis, type: 'army')
+    ionian_sea_position = create(:position, area: ionian_sea, type: 'fleet')
+    aegean_sea_position = create(:position, area: aegean_sea, type: 'fleet')
+
+    move = create(:order, type: 'move', from: tunis, to: smyrna, position: tunis_position)
+    convoy1 = create(:order, type: 'convoy', from: tunis, to: smyrna, position: ionian_sea_position)
+    convoy2 = create(:order, type: 'convoy', from: tunis, to: smyrna, position: aegean_sea_position)
+
+    assert_equal([:resolved], OrderService.resolve(move, Order.all))
+    assert_equal([:resolved], OrderService.resolve(convoy1, Order.all))
+    assert_equal([:resolved], OrderService.resolve(convoy2, Order.all))
+  end
+
+  test "resolve-convoy_bounce" do
+    tunis = Area.find_by_name('Tunis')
+    ionian_sea = Area.find_by_name('Ionian Sea')
+    aegean_sea = Area.find_by_name('Aegean Sea')
+    smyrna = Area.find_by_name('Smyrna')
+
+    tunis_position = create(:position, area: tunis, type: 'army')
+    ionian_sea_position = create(:position, area: ionian_sea, type: 'fleet')
+    aegean_sea_position = create(:position, area: aegean_sea, type: 'fleet')
+    smyrna_position = create(:position, area: smyrna, type: 'fleet')
+
+    move = create(:order, type: 'move', from: tunis, to: smyrna, position: tunis_position)
+    convoy1 = create(:order, type: 'convoy', from: tunis, to: smyrna, position: ionian_sea_position)
+    convoy2 = create(:order, type: 'convoy', from: tunis, to: smyrna, position: aegean_sea_position)
+    hold = create(:order, type: 'hold', from: smyrna, to: smyrna, position: smyrna_position)
+
+    assert_equal([:bounced], OrderService.resolve(move, Order.all))
+    assert_equal([:resolved], OrderService.resolve(convoy1, Order.all))
+    assert_equal([:resolved], OrderService.resolve(convoy2, Order.all))
+    assert_equal([:resolved], OrderService.resolve(hold, Order.all))
+  end
+
+  test "resolve-convoy_disrupted" do
+    england = create(:user_game, power: 'england')
+    germany = create(:user_game, power: 'germany')
+    tunis = Area.find_by_name('Tunis')
+    ionian_sea = Area.find_by_name('Ionian Sea')
+    aegean_sea = Area.find_by_name('Aegean Sea')
+    smyrna = Area.find_by_name('Smyrna')
+    adriatic_sea = Area.find_by_name('Adriatic Sea')
+    tyrrhenian_sea = Area.find_by_name('Tyrrhenian Sea')
+
+    tunis_position = create(:position, area: tunis, type: 'army', user_game: england)
+    ionian_sea_position = create(:position, area: ionian_sea, type: 'fleet', user_game: england)
+    aegean_sea_position = create(:position, area: aegean_sea, type: 'fleet', user_game: england)
+    adriatic_sea_position = create(:position, area: adriatic_sea, type: 'fleet', user_game: germany)
+    tyrrhenian_sea_position = create(:position, area: tyrrhenian_sea, type: 'fleet', user_game: germany)
+
+    move = create(:order, type: 'move', from: tunis, to: smyrna, position: tunis_position, user_game: england)
+    convoy1 = create(:order, type: 'convoy', from: tunis, to: smyrna, position: ionian_sea_position, user_game: england)
+    convoy2 = create(:order, type: 'convoy', from: tunis, to: smyrna, position: aegean_sea_position, user_game: england)
+    attack_convoy = create(:order, type: 'move', from: adriatic_sea, to: ionian_sea, position: adriatic_sea_position, user_game: germany)
+    support_attack = create(:order, type: 'support', from: adriatic_sea, to: ionian_sea, position: tyrrhenian_sea_position, user_game: germany)
+
+    assert_equal([:cancelled], OrderService.resolve(move, Order.all))
+    assert_equal([:dislodged, attack_convoy], OrderService.resolve(convoy1, Order.all))
+    assert_equal([:cancelled], OrderService.resolve(convoy2, Order.all))
+    assert_equal([:resolved], OrderService.resolve(attack_convoy, Order.all))
+    assert_equal([:resolved], OrderService.resolve(support_attack, Order.all))
   end
 
   private
