@@ -81,16 +81,23 @@ module OrderService
   end
 
   def self.resolve_move(order, orders)
-    return resolve_hold(order, orders) if attacking_pressure(order.position.area, orders).present?
+    # TODO: check if convoyed and convoy is disrupted
 
     attack_hash = attacking_pressure(order.to, orders)
-    # order bounces if it was not part of the max strength attacks on the area
-    return [:bounced] unless attack_hash.keys.include?(order)
+    attack_succeeds = attack_hash.key?(order) && (attack_hash[order].size + 1 > hold_support(order.to, orders).size)
+    # bounce if not part of successful attack or multiple attacks have enough strength
+    unless attack_succeeds && attack_hash.keys == [order]
+      hold_resolution = resolve_hold(order, orders)
+      return hold_resolution == [:resolved] ? [:bounced] : hold_resolution
+    end
 
-    attack_strength = attack_hash[order].size + 1
-    attack_succeeds = attack_strength > hold_support(order.to, orders).size
-    # resolved if attack succeeds and it is only attack order, otherwise move is bounced
-    attack_succeeds && attack_hash.keys == [order] ? [:resolved] : [:bounced]
+    # bounce if target area contains a unit moving to the current location
+    if orders.any? { |o| o.move? && o.to == order.from && o.from == order.to }
+      return [:bounced]
+    end
+
+    # TODO: cannot dislodge own units
+    [:resolved]
   end
 
   def self.resolve_hold(order, orders)
@@ -114,7 +121,10 @@ module OrderService
       (o.move? || o.hold?) && order.from == o.from && order.to == o.to
     end
     return [:invalid] unless corresponding_order.present?
-    attack_hash = attacking_pressure(order.position.area, orders)
+    attack_hash = attacking_pressure(order.position.area, orders).reject do |o, _|
+      # exclude any attacks from the target area to the current support
+      o.move? && o.from == order.to && o.to == order.position.area
+    end
     attack_hash.present? ? resolve_hold(order, orders) : [:resolved]
   end
 
@@ -122,7 +132,7 @@ module OrderService
 
   def self.hold_support(area, orders)
     orders.select do |o|
-      order_originates_at_position = o.position.area == area
+      order_originates_at_position = o.position.area == area && !o.move?
       order_supports_area = o.support? && o.from == area && o.to == area && orders.any? { |i| !i.move? && i.position.area == area }
 
       order_originates_at_position || order_supports_area
@@ -132,7 +142,7 @@ module OrderService
   # returns hash of { attack_order: [supporting_orders] } excluding the less supported attacks
   def self.attacking_pressure(area, orders)
     orders.select do |o|
-      o.move? && o.to == area && attacking_pressure(o.position.area, orders.without(o)).empty?
+      o.move? && o.to == area
     end.reduce({}) do |attack_hash, o|
       support = attack_support(o, orders.without(o))
       prev_support_level = (attack_hash.values.first || []).size
@@ -145,7 +155,7 @@ module OrderService
   def self.attack_support(order, orders)
     orders.select do |o|
       order_supports_attack = o.support? && o.from == order.from && o.to == order.to
-      order_not_cut = attacking_pressure(o.position.area, orders.without(o)).keys.any? do |attack_order|
+      order_not_cut = attacking_pressure(o.position.area, orders).all? do |attack_order, _|
         attack_order.from == order.to
       end
       order_supports_attack && order_not_cut

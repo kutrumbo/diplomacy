@@ -182,6 +182,72 @@ class OrderServiceTest < ActiveSupport::TestCase
     assert_equal([:resolved], OrderService.resolve(hold, Order.all))
   end
 
+  test "resolve-move_swap" do
+    budapest = Area.find_by_name('Budapest')
+    bulgaria = Area.find_by_name('Bulgaria')
+
+    budapest_position = create(:position, area: budapest, type: 'army')
+    bulgaria_position = create(:position, area: bulgaria, type: 'army')
+
+    move1 = create(:order, type: 'move', from: budapest, to: bulgaria, position: budapest_position)
+    move2 = create(:order, type: 'move', from: bulgaria, to: budapest, position: bulgaria_position)
+
+    assert_equal([:bounced], OrderService.resolve(move1, Order.all))
+    assert_equal([:bounced], OrderService.resolve(move2, Order.all))
+  end
+
+  test "resolve-supported_attack" do
+    budapest = Area.find_by_name('Budapest')
+    bulgaria = Area.find_by_name('Bulgaria')
+    rumania = Area.find_by_name('Rumania')
+
+    budapest_position = create(:position, area: budapest, type: 'army')
+    bulgaria_position = create(:position, area: bulgaria, type: 'army')
+    rumania_position = create(:position, area: rumania, type: 'army')
+
+    attack = create(:order, type: 'move', from: bulgaria, to: rumania, position: bulgaria_position)
+    support = create(:order, type: 'support', from: bulgaria, to: rumania, position: budapest_position)
+    hold = create(:order, type: 'hold', from: rumania, to: rumania, position: rumania_position)
+
+    assert_equal([:resolved], OrderService.resolve(attack, Order.all))
+    assert_equal([:resolved], OrderService.resolve(support, Order.all))
+    assert_equal([:dislodged, attack], OrderService.resolve(hold, Order.all))
+  end
+
+  test "resolve-move_train" do
+    budapest = Area.find_by_name('Budapest')
+    bulgaria = Area.find_by_name('Bulgaria')
+    rumania = Area.find_by_name('Rumania')
+
+    bulgaria_position = create(:position, area: bulgaria, type: 'army')
+    rumania_position = create(:position, area: rumania, type: 'army')
+
+    move1 = create(:order, type: 'move', from: bulgaria, to: rumania, position: bulgaria_position)
+    move2 = create(:order, type: 'move', from: rumania, to: budapest, position: rumania_position)
+
+    assert_equal([:resolved], OrderService.resolve(move1, Order.all))
+    assert_equal([:resolved], OrderService.resolve(move2, Order.all))
+  end
+
+  # test "resolve-power_cannot_dislodge_itself" do
+  #   user_game = create(:user_game)
+  #   budapest = Area.find_by_name('Budapest')
+  #   bulgaria = Area.find_by_name('Bulgaria')
+  #   rumania = Area.find_by_name('Rumania')
+  #
+  #   budapest_position = create(:position, area: budapest, type: 'army', user_game: user_game)
+  #   bulgaria_position = create(:position, area: bulgaria, type: 'army', user_game: user_game)
+  #   rumania_position = create(:position, area: rumania, type: 'army', user_game: user_game)
+  #
+  #   attack = create(:order, type: 'move', from: bulgaria, to: rumania, position: bulgaria_position, user_game: user_game)
+  #   support = create(:order, type: 'support', from: bulgaria, to: rumania, position: budapest_position, user_game: user_game)
+  #   hold = create(:order, type: 'hold', from: rumania, to: rumania, position: rumania_position, user_game: user_game)
+  #
+  #   assert_equal([:bounced], OrderService.resolve(attack, Order.all))
+  #   assert_equal([:resolved], OrderService.resolve(support, Order.all))
+  #   assert_equal([:resolved], OrderService.resolve(hold, Order.all))
+  # end
+
   private
 
   def parse_order_results(orders)

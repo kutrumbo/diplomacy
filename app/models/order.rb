@@ -10,6 +10,8 @@ class Order < ApplicationRecord
   belongs_to :from, class_name: 'Area', optional: true
   belongs_to :to, class_name: 'Area', optional: true
 
+  delegate :power, to: :user_game
+
   validates_inclusion_of :type, in: ORDER_TYPES
 
   scope :convoy, -> { where(type: 'convoy') }
