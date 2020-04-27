@@ -96,7 +96,11 @@ module OrderService
       return [:bounced]
     end
 
-    # TODO: cannot dislodge own units
+    # do not allow self-dislodgement
+    if orders.any? { |o| !o.move? && o.position.area == order.to && o.power == order.power }
+      return [:bounced]
+    end
+
     [:resolved]
   end
 
@@ -106,11 +110,15 @@ module OrderService
 
     attack_strength = attack_hash.values.first.size + 1
     if attack_strength > hold_support(order.position.area, orders).size
-      if attack_hash.size == 1
-        # TODO: make sure country cannot dislodge itself
-        return [:dislodged, attack_hash.keys.first]
-      end
       # if multiple attackers, attacks bounce and position holds
+      if attack_hash.size == 1
+        if attack_hash.keys.first.power == order.power
+          # do not allow self-dislodgement
+          return [:resolved]
+        else
+          return [:dislodged, attack_hash.keys.first]
+        end
+      end
     end
     # TODO: convoy attack can not cut support to a fleet supporting another convoying fleet
     order.hold? ? [:resolved] : [:cut, attack_hash.keys.first]
