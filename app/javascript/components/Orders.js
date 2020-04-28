@@ -25,7 +25,7 @@ function OrderRow({ areas, error, order, position, updateOrders, validOrder }) {
   const fromOptions = validFromOptions(order, validOrder, position);
   const toOptions = validToOptions(order, validOrder, position);
 
-  const handleChange = (event) => {
+  const handleSelect = (event) => {
     const { name, value } = event.target;
     let updatedOrder = { ...order, [name]: name === 'type' ? value : parseInt(value, 10) };
     if (name === 'type') {
@@ -44,6 +44,14 @@ function OrderRow({ areas, error, order, position, updateOrders, validOrder }) {
     }));
   }
 
+  const handleCheck = (event) => {
+    const checked = event.target.checked;
+    updateOrders(prevOrders => ({
+      ...prevOrders,
+      [order.id]: { ...order, confirmed: checked }
+    }));
+  }
+
   const showFrom = order.type === 'support' || order.type === 'convoy';
   const showTo = order.type !== 'hold';
 
@@ -53,7 +61,7 @@ function OrderRow({ areas, error, order, position, updateOrders, validOrder }) {
       <td>{areas[position.area_id].name}</td>
       <td>
         <div className={`select is-rounded is-small${error ? ' is-danger' : ''}`}>
-          <select value={order.type} name="type" onChange={handleChange}>
+          <select value={order.type} name="type" onChange={handleSelect}>
             {keys(validOrder).map(orderType =>
               <option key={orderType} value={orderType}>{orderType.toUpperCase()}</option>
             )}
@@ -67,7 +75,7 @@ function OrderRow({ areas, error, order, position, updateOrders, validOrder }) {
               className="select-region"
               value={order.from_id}
               name="from_id"
-              onChange={handleChange}>
+              onChange={handleSelect}>
               {(order.from_id === '') && <option value="" disabled>---</option>}
               {fromOptions.map(fromId =>
                 <option key={fromId} value={fromId}>{areas[fromId].name}</option>
@@ -83,7 +91,7 @@ function OrderRow({ areas, error, order, position, updateOrders, validOrder }) {
               className="select-region"
               value={order.to_id}
               name="to_id"
-              onChange={handleChange}>
+              onChange={handleSelect}>
               {(order.to_id === '') && <option value="" disabled>---</option>}
               {toOptions.map(toId =>
                 <option key={toId} value={toId}>{areas[toId].name}</option>
@@ -91,6 +99,11 @@ function OrderRow({ areas, error, order, position, updateOrders, validOrder }) {
             </select>
           </div>
         }
+      </td>
+      <td>
+        <label className="checkbox checkbox-confirm">
+          <input type="checkbox" checked={order.confirmed} onChange={handleCheck} />
+        </label>
       </td>
     </tr>
   );
@@ -147,6 +160,7 @@ export default function Orders(props) {
             <th>Order</th>
             <th className="order-region-column">From</th>
             <th className="order-region-column">To</th>
+            <th>Confirm</th>
           </tr>
         </thead>
         <tbody>

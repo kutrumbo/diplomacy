@@ -37,3 +37,7 @@ html {
 .select-region {
   width: 170px;
 }
+
+.checkbox-confirm {
+  padding: 2px 12px;
+}
