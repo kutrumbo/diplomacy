@@ -1,6 +1,6 @@
 module OrderService
   # output is of form { [position_id]: { [order_type]: [from_id, to_id]} }
-  def self.valid_orders(user_game)
+  def self.valid_orders(user_game, turn)
     all_unit_positions = user_game.game.positions.with_unit
 
     user_game.positions.with_unit.reduce({}) do |order_map, position|

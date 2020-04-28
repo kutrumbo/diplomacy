@@ -60,7 +60,7 @@ module PositionService
     elsif position.turn.retreat?
       create_default_order(position, 'retreat') if position.dislodged?
     elsif position.turn.build?
-      create_default_order(position, 'build') if supports_build(position)
+      create_default_order(position, 'build_army') if supports_build(position)
     end
   end
 

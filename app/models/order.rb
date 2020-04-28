@@ -1,5 +1,5 @@
 class Order < ApplicationRecord
-  ORDER_TYPES = %w(hold move support convoy build retreat).freeze
+  ORDER_TYPES = %w(hold move support convoy build_fleet build_army retreat).freeze
   self.inheritance_column = :_type_disabled # disable single-table inheritance
 
   belongs_to :user_game

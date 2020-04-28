@@ -12,7 +12,7 @@ class GamesController < ApplicationController
     @turn = @game.current_turn
     @positions = @turn.positions.index_by(&:id)
     @orders = @user_game.orders.where(turn: @turn).index_by(&:id)
-    @valid_orders = OrderService.valid_orders(@user_game)
+    @valid_orders = OrderService.valid_orders(@user_game, @turn)
     @areas = Area.all.index_by(&:id)
   end
 end
