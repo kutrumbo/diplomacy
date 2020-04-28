@@ -26,9 +26,14 @@ class GameServiceTest < ActiveSupport::TestCase
   end
 
   test "creates starting positions" do
-    GameService.initiate_game('bar', create_list(:user, 7))
+    GameService.initiate_game('foo', create_list(:user, 7))
 
-    assert_equal(42, Game.find_by_name('bar').positions.count)
     assert_equal(42, Position.count)
+  end
+
+  test "creates default orders" do
+    GameService.initiate_game('foo', create_list(:user, 7))
+
+    assert_equal(22, Order.count)
   end
 end

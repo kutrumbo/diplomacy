@@ -98,7 +98,6 @@ function OrderRow({ areas, error, order, position, updateOrders, validOrder }) {
 
 export default function Orders(props) {
   const csrfToken = document.querySelector('[name=csrf-token]').content;
-  const [ordersSubmitted, setOrdersSubmitted] = useState(props.user_game.state === 'confirmed');
   const [orders, updateOrders] = useState(props.orders);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -124,7 +123,6 @@ export default function Orders(props) {
     })
     .then(json => {
       setLoading(false);
-      setOrdersSubmitted(true);
     })
     .catch(error => error.json())
     .then(errorJson => {
@@ -139,7 +137,7 @@ export default function Orders(props) {
       <button
         className={`button is-primary is-pulled-right${loading ? ' is-loading' : ''}`}
         onClick={submitOrders}>
-        { ordersSubmitted ? 'Resubmit' : 'Submit' }
+        Submit
       </button>
       <table className="table is-fullwidth">
         <thead>

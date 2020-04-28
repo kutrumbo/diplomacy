@@ -5,8 +5,8 @@ module GameService
     ActiveRecord::Base.transaction do
       game = Game.create!(name: name)
       assign_powers(game, users)
-      create_starting_positions(game)
       game.turns.create!(type: 'spring', number: 1)
+      create_starting_positions(game)
     end
   end
 
@@ -14,8 +14,8 @@ module GameService
 
   def self.assign_powers(game, users)
     powers = UserGame::POWER_TYPES.dup
-    game.user_games << users.map do |user|
-      UserGame.create!(user: user, game: game, power: powers.delete(powers.sample), state: 'pending')
+    users.map do |user|
+      game.user_games.create!(user: user, game: game, power: powers.delete(powers.sample))
     end
   end
 
@@ -23,7 +23,13 @@ module GameService
     game.user_games.each do |user_game|
       Area.starting_power(user_game.power).each do |area|
         coast = Coast.find_by(area: area, direction: area.coast)
-        user_game.positions.create!(type: area.unit, area: area, coast: coast)
+        game.turns.first.positions.create!(
+          type: area.unit,
+          area: area,
+          coast: coast,
+          user_game: user_game,
+          dislodged: false,
+        )
       end
     end
   end

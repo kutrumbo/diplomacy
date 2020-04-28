@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_04_26_163406) do
+ActiveRecord::Schema.define(version: 2020_04_28_011719) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -59,6 +59,7 @@ ActiveRecord::Schema.define(version: 2020_04_26_163406) do
     t.bigint "position_id", null: false
     t.bigint "from_id"
     t.bigint "to_id"
+    t.boolean "confirmed", null: false
     t.index ["from_id"], name: "index_orders_on_from_id"
     t.index ["position_id"], name: "index_orders_on_position_id"
     t.index ["to_id"], name: "index_orders_on_to_id"
@@ -73,8 +74,12 @@ ActiveRecord::Schema.define(version: 2020_04_26_163406) do
     t.bigint "area_id", null: false
     t.bigint "coast_id"
     t.bigint "user_game_id", null: false
+    t.string "power"
+    t.boolean "dislodged", null: false
+    t.bigint "turn_id", null: false
     t.index ["area_id"], name: "index_positions_on_area_id"
     t.index ["coast_id"], name: "index_positions_on_coast_id"
+    t.index ["turn_id"], name: "index_positions_on_turn_id"
     t.index ["user_game_id"], name: "index_positions_on_user_game_id"
   end
 
@@ -93,7 +98,6 @@ ActiveRecord::Schema.define(version: 2020_04_26_163406) do
     t.datetime "updated_at", precision: 6, null: false
     t.bigint "game_id", null: false
     t.bigint "user_id", null: false
-    t.string "state", null: false
     t.index ["game_id"], name: "index_user_games_on_game_id"
     t.index ["user_id"], name: "index_user_games_on_user_id"
   end
@@ -116,6 +120,7 @@ ActiveRecord::Schema.define(version: 2020_04_26_163406) do
   add_foreign_key "orders", "user_games"
   add_foreign_key "positions", "areas"
   add_foreign_key "positions", "coasts"
+  add_foreign_key "positions", "turns"
   add_foreign_key "positions", "user_games"
   add_foreign_key "turns", "games"
   add_foreign_key "user_games", "games"

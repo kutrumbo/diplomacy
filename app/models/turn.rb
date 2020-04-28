@@ -3,13 +3,11 @@ class Turn < ApplicationRecord
   self.inheritance_column = :_type_disabled # disable single-table inheritance
 
   belongs_to :game
-  has_many :orders
-  has_many :positions, through: :game
+  has_many :orders, dependent: :destroy
+  has_many :positions, dependent: :destroy
   has_many :user_games, through: :game
 
   validates_inclusion_of :type, in: TURN_TYPES
-
-  after_create :prepare_orders
 
   def year
     1901 + (number / 5)
@@ -25,19 +23,5 @@ class Turn < ApplicationRecord
 
   def build?
     self.type == 'winter'
-  end
-
-  private
-
-  def prepare_orders
-    self.game.positions.with_unit.each do |position|
-      self.orders.create!(
-        type: 'hold',
-        user_game: position.user_game,
-        position: position,
-        from_id: position.area_id,
-        to_id: position.area_id,
-      )
-    end
   end
 end
