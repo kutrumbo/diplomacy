@@ -1,9 +1,11 @@
 module TurnService
+  WINNING_SUPPLY_CENTER_AMOUNT = 18
+
   def self.process_turn(turn)
     return if turn.nil?
     if complete?(turn)
       if turn.attack?
-        # TODO resolve orders
+        resolve_attack_orders(turn)
       elsif turn.retreat?
         # TODO resolve retreats
       else
@@ -17,23 +19,25 @@ module TurnService
     end
   end
 
-  def self.complete?(turn)
-    !turn.user_games.any?(&:pending?)
+  def self.resolve_attack_orders(turn)
+    order_resolutions = turn.orders.group_by { |o| OrderService.resolve(o).first }
+    PositionService.process_attack_orders(positions, order_resolutions)
   end
 
-  def self.process_orders(turn)
+  def self.complete?(turn)
+    !turn.user_games.any?(&:pending?)
   end
 
   def self.victory?(game)
     # TODO check for resignations
     game.positions.supply_center.group(:user_game_id).size.values.any? do |size|
-      size >= 18
+      size >= WINNING_SUPPLY_CENTER_AMOUNT
     end
   end
 
   def self.finish_game(game)
     victor_id = turn.positions.supply_center.group(:user_game_id).size.find do |ug_id, size|
-      size >= 18
+      size >= WINNING_SUPPLY_CENTER_AMOUNT
     end.first
     victor = UserGame.find(victor_id)
     # TODO

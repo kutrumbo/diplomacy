@@ -61,16 +61,16 @@ module OrderService
     end.flatten(1)
   end
 
-  def self.resolve(order, orders)
+  def self.resolve(order)
     case order.type
     when 'move'
-      resolve_move(order, orders)
+      resolve_move(order, order.turn.orders)
     when 'hold'
-      resolve_hold(order, orders)
+      resolve_hold(order, order.turn.orders)
     when 'support'
-      resolve_support(order, orders)
+      resolve_support(order, order.turn.orders)
     when 'convoy'
-      resolve_convoy(order, orders)
+      resolve_convoy(order, order.turn.orders)
     when 'build'
       :not_implemented # TODO
     when 'retreat'
