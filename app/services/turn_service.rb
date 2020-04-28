@@ -18,7 +18,8 @@ module TurnService
       if victor = determine_victor(next_turn)
         # TODO
       else
-        next_turn.positions.each do |position|
+
+        next_turn.reload.positions.each do |position|
           PositionService.prepare_order(position)
         end
         if next_turn.reload.orders.empty?

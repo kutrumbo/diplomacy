@@ -72,9 +72,9 @@ module OrderService
     when 'convoy'
       resolve_convoy(order, order.turn.orders)
     when 'build'
-      :not_implemented # TODO
+      [:not_implemented] # TODO
     when 'retreat'
-      :not_implemented # TODO
+      [:not_implemented] # TODO
     else
       raise 'Invalid order type'
     end
