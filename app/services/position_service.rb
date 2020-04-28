@@ -69,6 +69,6 @@ module PositionService
 
   def self.supports_build(position)
     # TODO: calculate if user gets any builds
-    position.power == position.area.power && position.type.nil?
+    position.power == position.area.power && position.type? && p.area.supply_center?
   end
 end

@@ -2,7 +2,7 @@ module TurnService
   WINNING_SUPPLY_CENTER_AMOUNT = 18
 
   def self.process_turn(turn)
-    return if turn.nil?
+    return if turn.number < turn.game.current_turn.number
     if turn_complete?(turn)
       order_resolutions = turn.orders.group_by do |o|
         OrderService.resolve(o).first
@@ -48,9 +48,9 @@ module TurnService
 
   def self.next_turn_type(turn)
     {
-      spring: 'fall',
+      spring: 'spring_retreat',
       spring_retreat: 'fall',
-      fall: 'winter',
+      fall: 'fall_retreat',
       fall_retreat: 'winter',
       winter: 'spring',
     }[turn.type.to_sym]
