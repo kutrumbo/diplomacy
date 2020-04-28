@@ -20,6 +20,8 @@ class Order < ApplicationRecord
   scope :from_area, -> (from) { where(from: from) }
   scope :to_area, -> (to) { where(to: to) }
 
+  after_update { |order| TurnService.process_turn(order.turn) }
+
   def convoy?
     self.type == 'convoy'
   end

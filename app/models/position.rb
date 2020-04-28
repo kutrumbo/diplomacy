@@ -16,8 +16,7 @@ class Position < ApplicationRecord
   scope :with_unit, -> { where.not(type: nil) }
   scope :unoccupied, -> { where(type: nil) }
   scope :supply_center, -> { joins(:area).where(areas: { supply_center: true }) }
-
-  after_create :prepare_order
+  scope :occupied, -> { where.not(power: nil) }
 
   def army?
     self.type == 'army'
@@ -25,20 +24,5 @@ class Position < ApplicationRecord
 
   def fleet?
     self.type == 'fleet'
-  end
-
-  private
-
-  def prepare_order
-    if self.type.present?
-      self.turn.orders.create!(
-        type: 'hold',
-        user_game: self.user_game,
-        from_id: self.area_id,
-        to_id: self.area_id,
-        confirmed: false,
-        position: self,
-      )
-    end
   end
 end

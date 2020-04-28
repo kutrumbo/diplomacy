@@ -28,8 +28,6 @@ class OrdersController < ApplicationController
     valid_orders = OrderService.valid_orders(@user_game)
     validations = orders.to_h.reduce({}) do |validation_map, (order_id, order)|
       permissible_orders = valid_orders[order[:position_id]][order[:type]]
-      puts order
-      puts permissible_orders
       unless permissible_orders.include?([order[:from_id], order[:to_id]])
         validation_map[order_id] = true
       end
