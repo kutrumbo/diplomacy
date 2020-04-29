@@ -64,9 +64,15 @@ module OrderService
     positions = user_game.positions.turn(turn)
     builds_available = PositionService.calculate_builds_available(user_game, turn)
     if builds_available > 0
-      build_positions = positions.supply_center.unoccupied.joins(:area).where(area: { power: user_game.power })
+      build_positions = positions.supply_center.unoccupied.power(user_game.power)
       build_positions.reduce({}) do |order_map, position|
-        order_map[position.id] = { 'build' => [position.area_id, position.area_id] }
+        # TODO: do not allow no_build if they can build at all positions
+        position_order_map = {
+          'no_build' => [[position.area_id, position.area_id]],
+          'build_army' => [[position.area_id, position.area_id]],
+        }
+        position_order_map['build_fleet'] = [[position.area_id, position.area_id]] if position.area.coastal?
+        order_map[position.id] = position_order_map
         order_map
       end
     else
@@ -135,9 +141,7 @@ module OrderService
       resolve_support(order, order.turn.orders)
     when 'convoy'
       resolve_convoy(order, order.turn.orders)
-    when 'build_army'
-      [:resolved]
-    when 'build_fleet'
+    when 'build_army', 'build_fleet', 'no_build'
       [:resolved]
     when 'retreat'
       resolve_retreat(order, order.turn.orders)

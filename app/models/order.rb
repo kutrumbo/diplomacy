@@ -1,5 +1,5 @@
 class Order < ApplicationRecord
-  ORDER_TYPES = %w(hold move support convoy build_fleet build_army retreat disband).freeze
+  ORDER_TYPES = %w(hold move support convoy build_fleet build_army no_build retreat disband).freeze
   self.inheritance_column = :_type_disabled # disable single-table inheritance
 
   belongs_to :user_game
@@ -52,5 +52,9 @@ class Order < ApplicationRecord
 
   def disband?
     self.type == 'disband'
+  end
+
+  def no_build?
+    self.type == 'no_build'
   end
 end

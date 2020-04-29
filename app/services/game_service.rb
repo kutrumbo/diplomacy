@@ -24,7 +24,7 @@ module GameService
   end
 
   def self.create_starting_positions(game)
-    turn = game.turns.first
+    turn = game.current_turn
     game.user_games.each do |user_game|
       Area.starting_power(user_game.power).each do |area|
         coast = Coast.find_by(area: area, direction: area.coast)

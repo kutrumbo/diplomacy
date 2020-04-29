@@ -54,7 +54,7 @@ module PositionService
       elsif order.build_army?
         next_position.update!(type: 'army')
       else
-        next_position.save! unless order.disband?
+        next_position.save! unless (order.disband? || order.no_build?)
       end
     when :dislodged
       next_position.update!(dislodged: true, power: nil)
@@ -78,6 +78,7 @@ module PositionService
   end
 
   def self.calculate_builds_available(user_game, turn)
+    positions = user_game.positions.turn(turn)
     supply_center_count = positions.supply_center.count
     unit_count = positions.with_unit.count
     builds_available = supply_center_count - unit_count
@@ -99,8 +100,8 @@ module PositionService
   def self.create_default_build_order(position)
     builds_available = PositionService.calculate_builds_available(position.user_game, position.turn)
     if builds_available > 0
-      if position.type.nil? && position.supply_center? && position.area.power == position.user_game.power
-        create_default_order(position, 'build_army')
+      if position.type.nil? && position.area.supply_center? && position.area.power == position.user_game.power
+        create_default_order(position, 'no_build')
       end
     elsif builds_available < 0
       create_default_order(position, 'disband') if position.type?

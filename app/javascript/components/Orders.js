@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { capitalize, filter, first, isEmpty, keys, last, map, uniq, values } from 'lodash';
+import { capitalize, filter, first, isEmpty, keys, last, map, startCase, uniq, values } from 'lodash';
 
 function validFromOptions(order, validOrder, position) {
   if (order.type === 'support' || order.type === 'convoy') {
@@ -10,7 +10,7 @@ function validFromOptions(order, validOrder, position) {
 }
 
 function validToOptions(order, validOrder, position) {
-  if (order.type === 'hold') {
+  if (['hold', 'build_army', 'build_fleet', 'no_build'].includes(order.type)) {
     return [position.area_id];
   }
   const orderDetails = validOrder[order.type];
@@ -63,7 +63,7 @@ function OrderRow({ areas, error, order, position, updateOrders, validOrder }) {
         <div className={`select is-rounded is-small${error ? ' is-danger' : ''}`}>
           <select value={order.type} name="type" onChange={handleSelect}>
             {keys(validOrder).map(orderType =>
-              <option key={orderType} value={orderType}>{orderType.toUpperCase()}</option>
+              <option key={orderType} value={orderType}>{startCase(orderType)}</option>
             )}
           </select>
         </div>
