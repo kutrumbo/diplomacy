@@ -24,4 +24,8 @@ class Turn < ApplicationRecord
   def build?
     self.type == 'winter'
   end
+
+  def previous_turn
+    self.game.turns.find_by(number: self.number - 1)
+  end
 end

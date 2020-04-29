@@ -3,6 +3,16 @@ module OrderService
   def self.valid_orders(user_game, turn)
     all_unit_positions = user_game.game.positions.with_unit
 
+    if turn.attack?
+      valid_attack_orders(user_game, all_unit_positions)
+    elsif turn.retreat?
+      valid_retreat_orders(user_game, all_unit_positions, turn)
+    elsif turn.build?
+      valid_build_orders(user_game, all_unit_positions)
+    end
+  end
+
+  def self.valid_attack_orders(user_game, all_unit_positions)
     user_game.positions.with_unit.reduce({}) do |order_map, position|
       position_order_map = {}
       position_order_map['hold'] = [[position.area_id, position.area_id]]
@@ -17,6 +27,41 @@ module OrderService
       order_map[position.id] = position_order_map
       order_map
     end
+  end
+
+  def self.valid_retreat_orders(user_game, all_unit_positions, turn)
+    # TODO: this could be made more efficient by positions having a reference to source order
+    previous_turn_order_resolutions = OrderService.resolve_orders(turn.previous_turn)
+    user_game.positions.retreating.where(turn: turn).reduce({}) do |order_map, position|
+      position_order_map = {}
+      position_order_map['disband'] = [position.area_id, position.area_id]
+      retreat_areas = if position.army?
+        position.area.neighboring_areas.army_acessible
+      else
+        position.area.neighboring_areas.fleet_acessible
+      end.reject do |area|
+        # cannot retreat to area where there is another unit, where there was a stand-off
+        # the previous turn, or where the attacking order that dislodged the unit came from
+        contains_unit = all_unit_positions.map(&:area).include?(area)
+        stand_off_last_turn = previous_turn_order_resolutions[:bounced].any? do |order|
+          order.to == area
+        end
+        dislodger_source = previous_turn_order_resolutions[:resolved].find do |order|
+          order.move? && order.to == area
+        end
+
+        contains_unit || stand_off_last_turn || dislodger_source == area
+      end
+      if retreat_locations.present?
+        position_order_map['retreat'] = retreat_locations.map { |area| [area.id, area.id] }
+      end
+      order_map[position.id] = position_order_map
+      order_map
+    end
+  end
+
+  def self.valid_build_orders(user_game)
+    # TODO
   end
 
   def self.valid_move_orders(current_position, other_unit_positions)
@@ -61,6 +106,12 @@ module OrderService
     end.flatten(1)
   end
 
+  def self.resolve_orders(turn)
+    turn.orders.group_by do |o|
+      OrderService.resolve(o).first
+    end
+  end
+
   def self.resolve(order)
     case order.type
     when 'move'
@@ -95,11 +146,15 @@ module OrderService
     end
 
     attack_hash = attacking_pressure(order.to, orders)
-    attack_succeeds = attack_hash.key?(order) && (attack_hash[order].size + 1 > hold_support(order.to, orders).size)
-    # bounce if not part of successful attack or multiple attacks have enough strength
+    attack_succeeds = attack_hash.key?(order) && attack_hash[order].size + 1 > hold_support(order.to, orders).size
     unless attack_succeeds && attack_hash.keys == [order]
+      # if attack fails or if one of multiple successful attacks, determine if it holds its area
       hold_resolution = resolve_hold(order, orders)
-      return hold_resolution == [:resolved] ? [:bounced] : hold_resolution
+      return [:bounced] if hold_resolution == [:resolved]
+      if hold_resolution == [:broken]
+        return attack_hash.size == 1 ? [:broken, attack_hash.keys.first] : [:bounced]
+      end
+      return hold_resolution
     end
 
     # bounce if target area contains a unit moving to the current location
@@ -107,7 +162,7 @@ module OrderService
       return [:bounced]
     end
 
-    # do not allow self-dislodgement
+    # do not allow a power to dislodge its own unit
     if orders.any? { |o| !o.move? && o.position.area == order.to && o.power == order.power }
       return [:bounced]
     end
@@ -117,9 +172,9 @@ module OrderService
   def self.resolve_hold(order, orders)
     attack_hash = attacking_pressure(order.position.area, orders)
     return [:resolved] if attack_hash.empty?
-
     attack_strength = attack_hash.values.first.size + 1
-    if attack_strength > hold_support(order.position.area, orders).size
+    hold_strength = hold_support(order.position.area, orders).size
+    if attack_strength > hold_strength
       # if multiple attackers, attacks bounce and position holds
       if attack_hash.size == 1
         if attack_hash.keys.first.power == order.power
@@ -131,7 +186,8 @@ module OrderService
       end
     end
     # TODO: convoy attack can not cut support to a fleet supporting another convoying fleet
-    order.hold? ? [:resolved] : [:cut, attack_hash.keys.first]
+    return [:resolved] if order.hold?
+    order.move? ? [:broken] : [:cut, attack_hash.keys.first]
   end
 
   def self.resolve_support(order, orders)
@@ -171,10 +227,18 @@ module OrderService
 
   def self.hold_support(area, orders)
     orders.select do |o|
-      order_originates_at_position = o.position.area == area && !o.move?
-      order_supports_area = o.support? && o.from == area && o.to == area && orders.any? { |i| !i.move? && i.position.area == area }
+      non_moving_position_at_area = o.position.area == area && !o.move?
+      support_hold_order = o.support? && o.from == area && o.to == area && orders.any? do |i|
+        # verify there is a non-moving unit at the area to support
+        !i.move? && i.position.area == area
+      end
+      failed_move_order_at_area = if o.position.area == area && o.move?
+        attack_hash = attacking_pressure(o.to, orders)
+        attack_succeeds = attack_hash.key?(o) && attack_hash[o].size + 1 > hold_support(o.to, orders.without(o)).size
+        !attack_succeeds || attack_hash.keys != [o]
+      end
 
-      order_originates_at_position || order_supports_area
+      non_moving_position_at_area || support_hold_order || failed_move_order_at_area
     end
   end
 

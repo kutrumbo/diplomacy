@@ -331,6 +331,38 @@ class OrderServiceTest < ActiveSupport::TestCase
     assert_equal([:resolved], OrderService.resolve(support_attack))
   end
 
+  test "resolve-broken_attack" do
+    turn = create(:turn)
+    budapest = Area.find_by_name('Budapest')
+    galicia = Area.find_by_name('Galicia')
+    greece = Area.find_by_name('Greece')
+    serbia = Area.find_by_name('Serbia')
+    vienna = Area.find_by_name('Vienna')
+
+    galicia_position = create(:position, area: galicia, type: 'army', turn: turn)
+    greece_position = create(:position, area: greece, type: 'army', turn: turn)
+    serbia_position = create(:position, area: serbia, type: 'army', turn: turn)
+    vienna_position = create(:position, area: vienna, type: 'army', turn: turn)
+
+    move1 = create(:order, type: 'move', from: greece, to: serbia, position: greece_position, turn: turn)
+    move2 = create(:order, type: 'move', from: serbia, to: budapest, position: serbia_position, turn: turn)
+    move3 = create(:order, type: 'move', from: vienna, to: budapest, position: vienna_position, turn: turn)
+    support = create(:order, type: 'support', from: vienna, to: budapest, position: galicia_position, turn: turn)
+
+    assert_equal([:bounced], OrderService.resolve(move1))
+    assert_equal([:resolved], OrderService.resolve(move3))
+    assert_equal([:resolved], OrderService.resolve(support))
+    assert_equal([:broken, move3], OrderService.resolve(move2))
+  end
+
+  # test "valid_retreat_orders" do
+  #   user_game = create(:user_game)
+  #   current_turn = create(:turn, game: user_game.game, number: 2)
+  #   previous_turn = create(:turn, game: user_game.game, number: 1)
+  #
+  #
+  # end
+
   private
 
   def parse_order_results(orders)

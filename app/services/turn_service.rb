@@ -4,9 +4,7 @@ module TurnService
   def self.process_turn(turn)
     return if turn.number < turn.game.current_turn.number
     if turn_complete?(turn)
-      order_resolutions = turn.orders.group_by do |o|
-        OrderService.resolve(o).first
-      end
+      order_resolutions = OrderService.resolve_orders(turn)
 
       next_turn = create_next_turn(turn)
       PositionService.process_orders(
