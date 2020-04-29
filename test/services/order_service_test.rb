@@ -355,14 +355,6 @@ class OrderServiceTest < ActiveSupport::TestCase
     assert_equal([:broken, move3], OrderService.resolve(move2))
   end
 
-  # test "valid_retreat_orders" do
-  #   user_game = create(:user_game)
-  #   current_turn = create(:turn, game: user_game.game, number: 2)
-  #   previous_turn = create(:turn, game: user_game.game, number: 1)
-  #
-  #
-  # end
-
   private
 
   def parse_order_results(orders)

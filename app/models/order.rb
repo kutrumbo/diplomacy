@@ -37,4 +37,16 @@ class Order < ApplicationRecord
   def support?
     self.type == 'support'
   end
+
+  def retreat?
+    self.type == 'retreat'
+  end
+
+  def build_army?
+    self.type == 'build_army'
+  end
+
+  def build_fleet?
+    self.type == 'build_fleet'
+  end
 end

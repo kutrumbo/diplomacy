@@ -12,8 +12,10 @@ module PositionService
       if current_turn.attack?
         process_previous_attack_position(previous_position, new_positions, upcoming_turn)
       else
-        new_position = previous_position.dup
-        new_position.update!(turn: upcoming_turn)
+        unless previous_position.dislodged?
+          new_position = previous_position.dup
+          new_position.update!(turn: upcoming_turn)
+        end
       end
     end
   end
@@ -40,8 +42,12 @@ module PositionService
 
     case resolution
     when :resolved
-      if order.move?
+      if order.move? || order.retreat?
         next_position.update!(area: order.to)
+      elsif order.build_fleet?
+        next_position.update!(type: 'fleet')
+      elsif order.build_army?
+        next_position.update!(type: 'army')
       else
         next_position.save!
       end
@@ -49,6 +55,8 @@ module PositionService
       next_position.update!(dislodged: true, power: nil)
     when :cancelled, :invalid, :bounced
       next_position.save!
+    when :failed
+      # Retreat failed so don't save new position
     else
       raise 'Unsupported resolution'
     end

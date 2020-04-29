@@ -36,24 +36,24 @@ module OrderService
       position_order_map = {}
       position_order_map['disband'] = [position.area_id, position.area_id]
       retreat_areas = if position.army?
-        position.area.neighboring_areas.army_acessible
+        position.area.neighboring_areas.army_accessible
       else
-        position.area.neighboring_areas.fleet_acessible
+        position.area.neighboring_areas.fleet_accessible
       end.reject do |area|
         # cannot retreat to area where there is another unit, where there was a stand-off
         # the previous turn, or where the attacking order that dislodged the unit came from
         contains_unit = all_unit_positions.map(&:area).include?(area)
-        stand_off_last_turn = previous_turn_order_resolutions[:bounced].any? do |order|
+        stand_off_last_turn = (previous_turn_order_resolutions[:bounced] || []).any? do |order|
           order.to == area
         end
-        dislodger_source = previous_turn_order_resolutions[:resolved].find do |order|
+        dislodger_source = (previous_turn_order_resolutions[:resolved] || []).find do |order|
           order.move? && order.to == area
         end
 
-        contains_unit || stand_off_last_turn || dislodger_source == area
+        contains_unit || stand_off_last_turn || dislodger_source&.area == area
       end
-      if retreat_locations.present?
-        position_order_map['retreat'] = retreat_locations.map { |area| [area.id, area.id] }
+      if retreat_areas.present?
+        position_order_map['retreat'] = retreat_areas.map { |area| [position.area_id, area.id] }
       end
       order_map[position.id] = position_order_map
       order_map
@@ -122,12 +122,22 @@ module OrderService
       resolve_support(order, order.turn.orders)
     when 'convoy'
       resolve_convoy(order, order.turn.orders)
-    when 'build'
-      [:not_implemented] # TODO
+    when 'build_army'
+      [:resolved]
+    when 'build_fleet'
+      [:resolved]
     when 'retreat'
-      [:not_implemented] # TODO
+      resolve_retreat(order, order.turn.orders)
     else
       raise 'Invalid order type'
+    end
+  end
+
+  def self.resolve_retreat(order, orders)
+    if conflicting_order = orders.without(order).find { |o| o.to == order.to }
+      [:failed, conflicting_order]
+    else
+      [:resolved]
     end
   end
 

@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
-import { capitalize, filter, first, keys, last, map, sortBy, uniq, values } from 'lodash';
+import { capitalize, filter, first, isEmpty, keys, last, map, uniq, values } from 'lodash';
 
 function validFromOptions(order, validOrder, position) {
   if (order.type === 'support' || order.type === 'convoy') {
-    return sortBy(uniq(map(validOrder[order.type], detail => first(detail))));
+    return uniq(map(validOrder[order.type], detail => first(detail))).sort();
   } else {
     return [position.area_id];
   }
@@ -14,11 +14,11 @@ function validToOptions(order, validOrder, position) {
     return [position.area_id];
   }
   const orderDetails = validOrder[order.type];
-  if (order.type === 'move') {
-    return sortBy(map(orderDetails, detail => last(detail)));
+  if (['move', 'retreat'].includes(order.type)) {
+    return map(orderDetails, detail => last(detail)).sort();
   }
   const validPaths = filter(orderDetails, detail => first(detail) === order.from_id);
-  return sortBy(uniq(map(validPaths, detail => last(detail))));
+  return uniq(map(validPaths, detail => last(detail))).sort();
 }
 
 function OrderRow({ areas, error, order, position, updateOrders, validOrder }) {
@@ -52,8 +52,8 @@ function OrderRow({ areas, error, order, position, updateOrders, validOrder }) {
     }));
   }
 
-  const showFrom = order.type === 'support' || order.type === 'convoy';
-  const showTo = order.type !== 'hold';
+  const showFrom = ['convoy', 'support'].includes(order.type);
+  const showTo = ['convoy', 'move', 'retreat', 'support'].includes(order.type);
 
   return (
     <tr>
@@ -142,6 +142,15 @@ export default function Orders(props) {
       setLoading(false);
       setError(errorJson);
     });
+  }
+
+  if (isEmpty(orders)) {
+    return (
+      <>
+        <h2 className="subtitle is-5">Orders</h2>
+        <p>No possible orders</p>
+      </>
+    )
   }
 
   return (
