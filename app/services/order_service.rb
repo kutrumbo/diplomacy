@@ -1,19 +1,19 @@
 module OrderService
   # output is of form { [position_id]: { [order_type]: [from_id, to_id]} }
   def self.valid_orders(user_game, turn)
-    all_unit_positions = user_game.game.positions.with_unit
+    all_unit_positions = user_game.game.positions.with_unit.turn(turn)
 
     if turn.attack?
-      valid_attack_orders(user_game, all_unit_positions)
+      valid_attack_orders(user_game, all_unit_positions, turn)
     elsif turn.retreat?
       valid_retreat_orders(user_game, all_unit_positions, turn)
     elsif turn.build?
-      valid_build_orders(user_game, all_unit_positions)
+      valid_build_orders(user_game, all_unit_positions, turn)
     end
   end
 
-  def self.valid_attack_orders(user_game, all_unit_positions)
-    user_game.positions.with_unit.reduce({}) do |order_map, position|
+  def self.valid_attack_orders(user_game, all_unit_positions, turn)
+    user_game.positions.with_unit.turn(turn).reduce({}) do |order_map, position|
       position_order_map = {}
       position_order_map['hold'] = [[position.area_id, position.area_id]]
       moves = valid_move_orders(position, all_unit_positions.without(position))
@@ -32,7 +32,7 @@ module OrderService
   def self.valid_retreat_orders(user_game, all_unit_positions, turn)
     # TODO: this could be made more efficient by positions having a reference to source order
     previous_turn_order_resolutions = OrderService.resolve_orders(turn.previous_turn)
-    user_game.positions.retreating.where(turn: turn).reduce({}) do |order_map, position|
+    user_game.positions.retreating.turn(turn).reduce({}) do |order_map, position|
       position_order_map = {}
       position_order_map['disband'] = [position.area_id, position.area_id]
       retreat_areas = if position.army?
@@ -60,8 +60,22 @@ module OrderService
     end
   end
 
-  def self.valid_build_orders(user_game)
-    # TODO
+  def self.valid_build_orders(user_game, all_unit_positions, turn)
+    positions = user_game.positions.turn(turn)
+    supply_center_count = positions.supply_center.count
+    unit_count = positions.with_unit.count
+    builds_available = supply_center_count - unit_count
+    if builds_available > 0
+      positions.supply_center.unoccupied.reduce({}) do |order_map, positions|
+        order_map[position.id] = { 'build' => [position.area_id, position.area_id] }
+        order_map
+      end
+    else
+      positions.reduce({}) do |order_map, positions|
+        order_map[position.id] = { 'disband' => [position.area_id, position.area_id] }
+        order_map
+      end
+    end
   end
 
   def self.valid_move_orders(current_position, other_unit_positions)

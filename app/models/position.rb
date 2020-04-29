@@ -18,6 +18,7 @@ class Position < ApplicationRecord
   scope :supply_center, -> { joins(:area).where(areas: { supply_center: true }) }
   scope :occupied, -> { where.not(power: nil) }
   scope :retreating, -> { where(dislodged: true) }
+  scope :turn, -> (turn) { where(turn: turn) }
 
   def army?
     self.type == 'army'

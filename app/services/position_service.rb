@@ -49,7 +49,7 @@ module PositionService
       elsif order.build_army?
         next_position.update!(type: 'army')
       else
-        next_position.save!
+        next_position.save! unless order.disband?
       end
     when :dislodged
       next_position.update!(dislodged: true, power: nil)

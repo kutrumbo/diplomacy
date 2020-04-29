@@ -49,4 +49,8 @@ class Order < ApplicationRecord
   def build_fleet?
     self.type == 'build_fleet'
   end
+
+  def disband?
+    self.type == 'disband'
+  end
 end
