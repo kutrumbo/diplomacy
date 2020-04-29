@@ -5,7 +5,7 @@ div[class="container"]
         h1[class="title is-3"] = @game.name
       div[class="level-right"]
         h1[class="title is-3"]
-          => @turn.type.capitalize
+          => @turn.type.humanize
           | -
           =< @turn.year
     = form_tag game_orders_path(@game)

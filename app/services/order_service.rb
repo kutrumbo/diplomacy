@@ -77,7 +77,10 @@ module OrderService
       end
     else
       positions.with_unit.reduce({}) do |order_map, position|
-        order_map[position.id] = { 'disband' => [position.area_id, position.area_id] }
+        order_map[position.id] = {
+          'disband' => [[position.area_id, position.area_id]],
+          'keep' => [[position.area_id, position.area_id]],
+        }
         order_map
       end
     end
@@ -141,7 +144,7 @@ module OrderService
       resolve_support(order, order.turn.orders)
     when 'convoy'
       resolve_convoy(order, order.turn.orders)
-    when 'build_army', 'build_fleet', 'no_build'
+    when 'build_army', 'build_fleet', 'no_build', 'disband', 'keep'
       [:resolved]
     when 'retreat'
       resolve_retreat(order, order.turn.orders)

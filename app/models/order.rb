@@ -1,5 +1,5 @@
 class Order < ApplicationRecord
-  ORDER_TYPES = %w(hold move support convoy build_fleet build_army no_build retreat disband).freeze
+  ORDER_TYPES = %w(hold move support convoy build_fleet build_army no_build retreat disband keep).freeze
   self.inheritance_column = :_type_disabled # disable single-table inheritance
 
   belongs_to :user_game
@@ -22,39 +22,9 @@ class Order < ApplicationRecord
 
   after_update { |order| TurnService.process_turn(order.turn) }
 
-  def convoy?
-    self.type == 'convoy'
-  end
-
-  def hold?
-    self.type == 'hold'
-  end
-
-  def move?
-    self.type == 'move'
-  end
-
-  def support?
-    self.type == 'support'
-  end
-
-  def retreat?
-    self.type == 'retreat'
-  end
-
-  def build_army?
-    self.type == 'build_army'
-  end
-
-  def build_fleet?
-    self.type == 'build_fleet'
-  end
-
-  def disband?
-    self.type == 'disband'
-  end
-
-  def no_build?
-    self.type == 'no_build'
+  ORDER_TYPES.each do |order_type|
+    define_method("#{order_type}?") do
+      self.type == order_type
+    end
   end
 end

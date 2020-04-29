@@ -27,11 +27,11 @@ module PositionService
 
   def self.process_previous_attack_position(previous_position, new_positions, upcoming_turn)
     # there can be multiple new positions on an area in cases of dislodgement
-    next_positions = new_positions.select do |p|
+    next_positions_on_area = new_positions.select do |p|
       previous_position.area == p.area
     end
 
-    if next_positions.empty? && previous_position.power?
+    if next_positions_on_area.empty? && previous_position.power?
       new_position = previous_position.dup
       # if no new positions and previous position was claimed, create new position
       new_position.update!(turn: upcoming_turn, type: nil)
@@ -53,8 +53,12 @@ module PositionService
         next_position.update!(type: 'fleet')
       elsif order.build_army?
         next_position.update!(type: 'army')
+      elsif order.support? || order.convoy? || order.hold? || order.keep?
+        next_position.save!
+      elsif order.disband? || order.no_build?
+        # do nothing
       else
-        next_position.save! unless (order.disband? || order.no_build?)
+        raise "Not implemented: resolved order of type: #{order.type}"
       end
     when :dislodged
       next_position.update!(dislodged: true, power: nil)
@@ -104,7 +108,7 @@ module PositionService
         create_default_order(position, 'no_build')
       end
     elsif builds_available < 0
-      create_default_order(position, 'disband') if position.type?
+      create_default_order(position, 'keep') if position.type?
     end
   end
 end

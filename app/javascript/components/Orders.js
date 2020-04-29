@@ -21,11 +21,12 @@ function validToOptions(order, validOrder, position) {
   return uniq(map(validPaths, detail => last(detail))).sort();
 }
 
-function OrderRow({ areas, error, order, position, updateOrders, validOrder }) {
+function OrderRow({ areas, error, order, position, setError, updateOrders, validOrder }) {
   const fromOptions = validFromOptions(order, validOrder, position);
   const toOptions = validToOptions(order, validOrder, position);
 
   const handleSelect = (event) => {
+    setError(null);
     const { name, value } = event.target;
     let updatedOrder = { ...order, [name]: name === 'type' ? value : parseInt(value, 10) };
     if (name === 'type') {
@@ -135,7 +136,7 @@ export default function Orders(props) {
       return response.json()
     })
     .then(json => {
-      setLoading(false);
+      location.reload();
     })
     .catch(error => error.json())
     .then(errorJson => {
@@ -175,6 +176,7 @@ export default function Orders(props) {
               key={order.id}
               order={order}
               position={props.positions[order.position_id]}
+              setError={setError}
               updateOrders={updateOrders}
               validOrder={props.valid_orders[order.position_id]}
             />
