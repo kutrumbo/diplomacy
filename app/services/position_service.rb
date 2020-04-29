@@ -18,6 +18,11 @@ module PositionService
         end
       end
     end
+    if current_turn.fall_retreat?
+      current_turn.reload.positions.with_unit.each do |position|
+        position.update!(power: position.user_game.power)
+      end
+    end
   end
 
   def self.process_previous_attack_position(previous_position, new_positions, upcoming_turn)

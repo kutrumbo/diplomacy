@@ -21,6 +21,10 @@ class Turn < ApplicationRecord
     ['spring_retreat', 'fall_retreat'].include?(self.type)
   end
 
+  def fall_retreat?
+    self.type == 'fall_retreat'
+  end
+
   def build?
     self.type == 'winter'
   end
