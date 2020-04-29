@@ -13,7 +13,7 @@ module OrderService
   end
 
   def self.valid_attack_orders(user_game, all_unit_positions, turn)
-    user_game.positions.with_unit.turn(turn).reduce({}) do |order_map, position|
+    user_game.positions.with_unit.includes_areas.turn(turn).reduce({}) do |order_map, position|
       position_order_map = {}
       position_order_map['hold'] = [[position.area_id, position.area_id]]
       moves = valid_move_orders(position, all_unit_positions.without(position))
@@ -62,16 +62,15 @@ module OrderService
 
   def self.valid_build_orders(user_game, all_unit_positions, turn)
     positions = user_game.positions.turn(turn)
-    supply_center_count = positions.supply_center.count
-    unit_count = positions.with_unit.count
-    builds_available = supply_center_count - unit_count
+    builds_available = PositionService.calculate_builds_available(user_game, turn)
     if builds_available > 0
-      positions.supply_center.unoccupied.reduce({}) do |order_map, positions|
+      build_positions = positions.supply_center.unoccupied.joins(:area).where(area: { power: user_game.power })
+      build_positions.reduce({}) do |order_map, position|
         order_map[position.id] = { 'build' => [position.area_id, position.area_id] }
         order_map
       end
     else
-      positions.reduce({}) do |order_map, positions|
+      positions.with_unit.reduce({}) do |order_map, position|
         order_map[position.id] = { 'disband' => [position.area_id, position.area_id] }
         order_map
       end

@@ -13,10 +13,9 @@ module TurnService
         next_turn,
       )
 
-      if victor = determine_victor(next_turn)
-        # TODO
+      if user_game_id = determine_victor(next_turn)
+        UserGame.find(user_game_id).update!(winner: true)
       else
-
         next_turn.reload.positions.each do |position|
           PositionService.prepare_order(position)
         end
@@ -29,9 +28,9 @@ module TurnService
   end
 
   def self.determine_victor(next_turn)
-    next_turn.positions.occupied.supply_center.group(:user_game_id).count.any? do |_, count|
+    next_turn.positions.occupied.supply_center.group(:user_game_id).count.find do |_, count|
       count >= 18
-    end
+    end&.first
   end
 
   def self.turn_complete?(turn)

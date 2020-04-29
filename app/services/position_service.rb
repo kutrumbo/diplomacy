@@ -6,9 +6,9 @@ module PositionService
       end
     end
 
-    new_positions = upcoming_turn.positions
+    new_positions = upcoming_turn.positions.includes_areas
     # loop through previous positions to see if any other positions need to be created
-    current_turn.positions.each do |previous_position|
+    current_turn.positions.includes_areas.each do |previous_position|
       if current_turn.attack?
         process_previous_attack_position(previous_position, new_positions, upcoming_turn)
       else
@@ -73,8 +73,14 @@ module PositionService
     elsif position.turn.retreat?
       create_default_order(position, 'retreat') if position.dislodged?
     elsif position.turn.build?
-      create_default_order(position, 'build_army') if supports_build(position)
+      create_default_build_order(position)
     end
+  end
+
+  def self.calculate_builds_available(user_game, turn)
+    supply_center_count = positions.supply_center.count
+    unit_count = positions.with_unit.count
+    builds_available = supply_center_count - unit_count
   end
 
   private
@@ -90,8 +96,14 @@ module PositionService
     )
   end
 
-  def self.supports_build(position)
-    # TODO: calculate if user gets any builds
-    position.power == position.area.power && position.type? && position.area.supply_center?
+  def self.create_default_build_order(position)
+    builds_available = PositionService.calculate_builds_available(position.user_game, position.turn)
+    if builds_available > 0
+      if position.type.nil? && position.supply_center? && position.area.power == position.user_game.power
+        create_default_order(position, 'build_army')
+      end
+    elsif builds_available < 0
+      create_default_order(position, 'disband') if position.type?
+    end
   end
 end

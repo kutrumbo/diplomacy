@@ -19,6 +19,7 @@ class Position < ApplicationRecord
   scope :occupied, -> { where.not(power: nil) }
   scope :retreating, -> { where(dislodged: true) }
   scope :turn, -> (turn) { where(turn: turn) }
+  scope :includes_areas, -> { includes(area: [:neighboring_areas, :neighboring_coasts]) }
 
   def army?
     self.type == 'army'
