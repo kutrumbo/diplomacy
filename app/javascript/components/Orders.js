@@ -155,12 +155,7 @@ export default function Orders(props) {
 
   return (
     <>
-      <h2 className="subtitle is-5 is-pulled-left">Orders</h2>
-      <button
-        className={`button is-primary is-pulled-right${loading ? ' is-loading' : ''}`}
-        onClick={submitOrders}>
-        Submit
-      </button>
+      <h2 className="subtitle is-5">Orders</h2>
       <table className="table is-fullwidth">
         <thead>
           <tr>
@@ -184,6 +179,20 @@ export default function Orders(props) {
               validOrder={props.valid_orders[order.position_id]}
             />
           )}
+          <tr>
+            <td />
+            <td />
+            <td />
+            <td />
+            <td />
+            <td>
+              <button
+                className={`button is-primary${loading ? ' is-loading' : ''}`}
+                onClick={submitOrders}>
+                Submit
+              </button>
+            </td>
+          </tr>
         </tbody>
       </table>
       {error && <div className="notification is-warning is-light">{error.message}</div>}
