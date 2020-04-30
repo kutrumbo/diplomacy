@@ -9,19 +9,32 @@ module PositionService
     new_positions = upcoming_turn.positions.includes_areas
     # loop through previous positions to see if any other positions need to be created
     current_turn.positions.includes_areas.each do |previous_position|
-      if current_turn.attack?
-        process_previous_attack_position(previous_position, new_positions, upcoming_turn)
-      else
-        unless previous_position.dislodged?
-          new_position = previous_position.dup
-          new_position.update!(turn: upcoming_turn)
+      process_previous_position(previous_position, new_positions, upcoming_turn, current_turn)
+    end
+    # if it is the end of fall, claim any occupied positions
+    if current_turn.fall_retreat?
+      current_turn.reload.positions.includes(:area).group_by(&:area).each do |area, positions|
+        raise 'Cannot be more than 2 positions on an area' if positions.size > 2
+        positions_with_unit = positions.select(&:type)
+        raise 'Can only be one position with a unit on a territory' if positions_with_unit.size > 1
+        if position_with_unit = positions_with_unit.first
+          # if there is a position with a unit, it claims the area and any other positon is destroyed
+          position_with_unit.update!(power: position_with_unit.user_game.power)
+          positions.reject(&:type).first&.destroy
         end
       end
     end
-    if current_turn.fall_retreat?
-      current_turn.reload.positions.with_unit.each do |position|
-        position.update!(power: position.user_game.power)
-      end
+  end
+
+  def self.process_previous_position(previous_position, new_positions, upcoming_turn, current_turn)
+    if current_turn.attack?
+      process_previous_attack_position(previous_position, new_positions, upcoming_turn)
+    elsif current_turn.retreat?
+      process_previous_retreat_position(previous_position, new_positions, upcoming_turn)
+    elsif current_turn.build?
+      process_previous_build_position(previous_position, new_positions, upcoming_turn)
+    else
+      raise 'Unsupported turn type'
     end
   end
 
@@ -31,10 +44,35 @@ module PositionService
       previous_position.area == p.area
     end
 
+    # if there are no new positions on the area and it was previously occupied, it remains occupied
     if next_positions_on_area.empty? && previous_position.power?
       new_position = previous_position.dup
       # if no new positions and previous position was claimed, create new position
       new_position.update!(turn: upcoming_turn, type: nil)
+    end
+
+    previous_power = previous_position.power
+    if previous_power.present? && next_positions_on_area.any? {|p| p.user_game.power != previous_power }
+      # if spot was previously occupied and a unit from a different power now is on the area
+      # then keep the spot occupied by the previous power
+      new_position = previous_position.dup
+      new_position.update!(turn: upcoming_turn, type: nil)
+    end
+  end
+
+  # create new positions for all old positions except ones that were dislodged
+  def self.process_previous_retreat_position(previous_position, new_positions, upcoming_turn)
+    unless previous_position.dislodged?
+      new_position = previous_position.dup
+      new_position.update!(turn: upcoming_turn)
+    end
+  end
+
+  # create new positions for all old positions except for areas where new position was created
+  def self.process_previous_build_position(previous_position, new_positions, upcoming_turn)
+    unless new_positions.any? { |p| p.area == previous_position.area }
+      new_position = previous_position.dup
+      new_position.update!(turn: upcoming_turn)
     end
   end
 
@@ -43,13 +81,12 @@ module PositionService
     next_position = order.position.dup
     next_position.type = order.position.type
     next_position.turn = upcoming_turn
-    # TODO does this duplicate logic of line 23?
-    next_position.power = order.power if upcoming_turn.build?
 
     case resolution
     when :resolved
       if order.move? || order.retreat?
-        next_position.update!(area: order.to)
+        areas_previous_power = order.turn.positions.find { |p| order.to == p.area }&.power
+        next_position.update!(area: order.to, power: areas_previous_power)
       elsif order.build_fleet?
         next_position.update!(type: 'fleet')
       elsif order.build_army?
