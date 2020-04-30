@@ -1,18 +1,20 @@
 table[class="table"]
-  thead
-    tr
-      th
-      th Name
-      th Power
-      th Supply Centers
-      th Armies
-      th Fleets
+  - unless card_view
+    thead
+      tr
+        th
+        th Name
+        th Power
+        th Supply Centers
+        th Armies
+        th Fleets
   tbody
     - game.user_games.sort_by { |ug| -ug.positions.turn(game.current_turn).supply_center.power(ug.power).count }.each do |user_game|
       tr[class="#{user_game == @user_game ? 'is-selected' : ''}"]
         td = user_game.orders.turn(game.current_turn).all?(&:confirmed) ? '' : '?'
         td = user_game.user.name
         td = user_game.power.capitalize
-        td = user_game.positions.turn(game.current_turn).supply_center.power(user_game.power).count
-        td = user_game.positions.turn(game.current_turn).with_army.count
-        td = user_game.positions.turn(game.current_turn).with_fleet.count
+        - unless card_view
+          td = user_game.positions.turn(game.current_turn).supply_center.power(user_game.power).count
+          td = user_game.positions.turn(game.current_turn).with_army.count
+          td = user_game.positions.turn(game.current_turn).with_fleet.count

@@ -14,7 +14,7 @@ div[class="container"]
     hr
     = react_component('PositionMap', { areas: @areas, map_path: image_path('diplomacy_map'), positions: @positions, user_games: @user_games })
     hr
-    = render partial: 'players', locals: { game: @game }
+    = render partial: 'players', locals: { game: @game, card_view: false }
   footer[class="footer"]
     p
       | Icons from
