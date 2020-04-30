@@ -1,0 +1,521 @@
+/*
+ * This is a manifest file that'll be compiled into application.css, which will include all the files
+ * listed below.
+ *
+ * Any CSS and SCSS file within this directory, lib/assets/stylesheets, or any plugin's
+ * vendor/assets/stylesheets directory can be referenced here using a relative path.
+ *
+ * You're free to add application-wide styles to this file and they'll appear at the bottom of the
+ * compiled file so the styles you add here t ake precedence over styles defined in any other CSS/SCSS
+ * files in this directory. Styles in this file should be added after the last require_* statement.
+ * It is generally better to create a new file per style scope.
+ *
+ *= require_tree .
+ *= require_self
+ */
+
+html {
+  background-color: hsl(0, 0%, 96%);
+}
+
+/* General styles */
+
+.margin-large {
+  margin: 48px 0;
+}
+
+.margin-small {
+  margin: 24px 0;
+}
+
+/* Sign-in styles */
+
+.container-sign-in {
+  width: 500px;
+}
+
+/* Order UI styles */
+
+.order-region-column {
+  min-width: 150px;
+}
+
+.select-region {
+  width: 170px;
+}
+
+.checkbox-confirm {
+  padding: 2px 12px;
+}
+
+/* Map styles */
+
+.container-map {
+  position: relative;
+  display: inline-block;
+}
+
+.icon-map {
+  position: absolute;
+}
+
+.occupied:not(.army):not(.fleet) {
+  border-radius: 50%;
+  height: 16px;
+  width: 16px;
+  margin: 8px;
+  background-color: black;
+}
+
+.army.occupied, .fleet.occupied {
+  border-radius: 18px;
+  border: 3px solid;
+}
+
+.army {
+  background-image: url(<%= asset_path 'army.svg' %>)
+}
+
+.fleet {
+  background-image: url(<%= asset_path 'fleet.svg' %>)
+}
+
+.austria {
+  /* #8c6e6e */
+  filter: invert(46%) sepia(7%) saturate(1094%) hue-rotate(314deg) brightness(96%) contrast(88%) drop-shadow(5px 5px 3px #222222);
+}
+
+.england {
+  /* #50508c */
+  filter: invert(28%) sepia(29%) saturate(965%) hue-rotate(202deg) brightness(105%) contrast(88%) drop-shadow(5px 5px 3px #222222);
+}
+
+.france {
+  /* #7896be */
+  filter: invert(63%) sepia(19%) saturate(686%) hue-rotate(175deg) brightness(89%) contrast(90%) drop-shadow(5px 5px 3px #222222);
+}
+
+.germany {
+  /* #5a5a5a */
+  filter: invert(40%) sepia(0%) saturate(3071%) hue-rotate(346deg) brightness(85%) contrast(91%) drop-shadow(5px 5px 3px #222222);
+}
+
+.italy {
+  /* #788c5a */
+  filter: invert(52%) sepia(8%) saturate(1485%) hue-rotate(42deg) brightness(98%) contrast(89%) drop-shadow(5px 5px 3px #222222);
+}
+
+.russia {
+  /* #787896 */
+  filter: invert(51%) sepia(5%) saturate(1732%) hue-rotate(202deg) brightness(93%) contrast(85%) drop-shadow(5px 5px 3px #222222);
+}
+
+.turkey {
+  /* #b4a03c */
+  filter: invert(57%) sepia(70%) saturate(351%) hue-rotate(13deg) brightness(94%) contrast(94%) drop-shadow(5px 5px 3px #222222);
+}
+
+.ankara {
+  top: 80%;
+  left: 82%;
+}
+
+.belgium {
+  top: 53%;
+  left: 34.7%;
+}
+
+.berlin {
+  top: 50%;
+  left: 47.5%;
+}
+
+.brest {
+  top: 58%;
+  left: 25.5%;
+}
+
+.budapest {
+  top: 63%;
+  left: 59%;
+}
+
+.bulgaria {
+  top: 77%;
+  left: 65%;
+}
+
+.bulgaria_east {
+  top: 75%;
+  left: 69%;
+}
+
+.bulgaria_south {
+  top: 80%;
+  left: 66%;
+}
+
+.constantinople {
+  top: 82%;
+  left: 72%;
+}
+
+.denmark {
+  top: 40%;
+  left: 44%;
+}
+
+.edinburgh {
+  top: 34%;
+  left: 29%;
+}
+
+.greece {
+  top: 88%;
+  left: 61%;
+}
+
+.holland {
+  top: 49%;
+  left: 37%;
+}
+
+.kiel {
+  top: 51%;
+  left: 42.5%;
+}
+
+.liverpool {
+  top: 41%;
+  left: 27%;
+}
+
+.london {
+  top: 48%;
+  left: 30%;
+}
+
+.marseilles {
+  top: 70%;
+  left: 32.5%;
+}
+
+.moscow {
+  top: 43%;
+  left: 73%;
+}
+
+.munich {
+  top: 58%;
+  left: 42%;
+}
+
+.naples {
+  top: 86%;
+  left: 50%;
+}
+
+.norway {
+  top: 24%;
+  left: 46%;
+}
+
+.paris {
+  top: 59%;
+  left: 29%;
+}
+
+.portugal {
+  top: 74%;
+  left: 9%;
+}
+
+.rome {
+  top: 78%;
+  left: 45%;
+}
+
+.rumania {
+  top: 70%;
+  left: 68%;
+}
+
+.saint_petersburg {
+  top: 25%;
+  left: 72%;
+}
+
+.saint_petersburg_north {
+  top: 14%;
+  left: 73%;
+}
+
+.saint_petersburg_south {
+  top: 31%;
+  left: 65%;
+}
+
+.serbia {
+  top: 76%;
+  left: 59%;
+}
+
+.sevastopol {
+  top: 58%;
+  left: 79%;
+}
+
+.smyrna {
+  top: 88%;
+  left: 75%;
+}
+
+.spain {
+  top: 76%;
+  left: 16%;
+}
+
+.spain_north {
+  top: 67%;
+  left: 17%;
+}
+
+.spain_south {
+  top: 83%;
+  left: 18%;
+}
+
+.sweden {
+  top: 26%;
+  left: 51%;
+}
+
+.trieste {
+  top: 71%;
+  left: 52%;
+}
+
+.tunis {
+  top: 94%;
+  left: 38%;
+}
+
+.venice {
+  top: 70%;
+  left: 43%;
+}
+
+.vienna {
+  top: 62%;
+  left: 52%;
+}
+
+.warsaw {
+  top: 52%;
+  left: 59%;
+}
+
+.clyde {
+  top: 33%;
+  left: 25%;
+}
+
+.yorkshire {
+  top: 42%;
+  left: 30%;
+}
+
+.wales {
+  top: 47%;
+  left: 25%;
+}
+
+.picardy {
+  top: 54%;
+  left: 30%;
+}
+
+.gascony {
+  top: 66%;
+  left: 26%;
+}
+
+.burgundy {
+  top: 61%;
+  left: 34%;
+}
+
+.north_africa {
+  top: 92%;
+  left: 20%;
+}
+
+.ruhr {
+  top: 54%;
+  left: 39%;
+}
+
+.prussia {
+  top: 47%;
+  left: 53%;
+}
+
+.silesia {
+  top: 53%;
+  left: 51%;
+}
+
+.piedmont {
+  top: 69%;
+  left: 39%;
+}
+
+.tuscany {
+  top: 74%;
+  left: 42%;
+}
+
+.apulia {
+  top: 80%;
+  left: 50%;
+}
+
+.tyrolia {
+  top: 64%;
+  left: 45%;
+}
+
+.galicia {
+  top: 58%;
+  left: 62%;
+}
+
+.bohemia {
+  top: 57%;
+  left: 49%;
+}
+
+.finland {
+  top: 25%;
+  left: 62%;
+}
+
+.livonia {
+  top: 43%;
+  left: 63%;
+}
+
+.ukraine {
+  top: 57%;
+  left: 70%;
+}
+
+.albania {
+  top: 81%;
+  left: 56.5%;
+}
+
+.armenia {
+  top: 78%;
+  left: 93%;
+}
+
+.syria {
+  top: 92%;
+  left: 90%;
+}
+
+.north_atlantic_ocean {
+  top: 27%;
+  left: 14%;
+}
+
+.mid_atlantic_ocean {
+  top: 65%;
+  left: 5%;
+}
+
+.norwegian_sea {
+  top: 16%;
+  left: 38%;
+}
+
+.north_sea {
+  top: 34%;
+  left: 36%;
+}
+
+.english_channel {
+  top: 51%;
+  left: 25%;
+}
+
+.irish_sea {
+  top: 46%;
+  left: 19%;
+}
+
+.heligoland_bight {
+  top: 43%;
+  left: 39%;
+}
+
+.skagerrack {
+  top: 34%;
+  left: 45%;
+}
+
+.baltic_sea {
+  top: 41.5%;
+  left: 54%;
+}
+
+.gulf_of_bothnia {
+  top: 32%;
+  left: 57%;
+}
+
+.barents_sea {
+  top: 3%;
+  left: 73%;
+}
+
+.western_mediterranean {
+  top: 85%;
+  left: 27%;
+}
+
+.gulf_of_lyons {
+  top: 76%;
+  left: 33%;
+}
+
+.tyrrhenian_sea {
+  top: 84%;
+  left: 43%;
+}
+
+.ionian_sea {
+  top: 90%;
+  left: 54%;
+}
+
+.adriatic_sea {
+  top: 76%;
+  left: 50%;
+}
+
+.aegean_sea {
+  top: 91%;
+  left: 67%;
+}
+
+.eastern_mediterranean {
+  top: 95%;
+  left: 75%;
+}
+
+.black_sea {
+  top: 72%;
+  left: 80%;
+}

@@ -43,6 +43,7 @@ module PositionService
     next_position = order.position.dup
     next_position.type = order.position.type
     next_position.turn = upcoming_turn
+    # TODO does this duplicate logic of line 23?
     next_position.power = order.power if upcoming_turn.build?
 
     case resolution
