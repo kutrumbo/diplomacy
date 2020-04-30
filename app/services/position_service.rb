@@ -13,13 +13,15 @@ module PositionService
     end
     # if it is the end of fall, claim any occupied positions
     if current_turn.fall_retreat?
-      current_turn.reload.positions.includes(:area).group_by(&:area).each do |area, positions|
+      upcoming_turn.reload.positions.includes(:area, :user_game).group_by(&:area).each do |area, positions|
         raise 'Cannot be more than 2 positions on an area' if positions.size > 2
         positions_with_unit = positions.select(&:type)
         raise 'Can only be one position with a unit on a territory' if positions_with_unit.size > 1
         if position_with_unit = positions_with_unit.first
-          # if there is a position with a unit, it claims the area and any other positon is destroyed
-          position_with_unit.update!(power: position_with_unit.user_game.power)
+          # if there is a position with a unit, it claims the area and any other positon is removed
+          if position_with_unit.power != position_with_unit.user_game.power
+            position_with_unit.update!(power: position_with_unit.user_game.power)
+          end
           positions.reject(&:type).first&.destroy
         end
       end
@@ -52,11 +54,13 @@ module PositionService
     end
 
     previous_power = previous_position.power
-    if previous_power.present? && next_positions_on_area.any? {|p| p.user_game.power != previous_power }
-      # if spot was previously occupied and a unit from a different power now is on the area
-      # then keep the spot occupied by the previous power
-      new_position = previous_position.dup
-      new_position.update!(turn: upcoming_turn, type: nil)
+    if previous_power.present? && previous_position.type.nil?
+      if next_positions_on_area.any? {|p| p.user_game.power != previous_power }
+        # if spot was previously occupied and a unit from a different power now is on the area
+        # then keep the spot occupied by the previous power
+        new_position = previous_position.dup
+        new_position.update!(turn: upcoming_turn, type: nil)
+      end
     end
   end
 
