@@ -34,7 +34,7 @@ module OrderService
     previous_turn_order_resolutions = OrderService.resolve_orders(turn.previous_turn)
     user_game.positions.retreating.turn(turn).reduce({}) do |order_map, position|
       position_order_map = {}
-      position_order_map['disband'] = [position.area_id, position.area_id]
+      position_order_map['disband'] = [[position.area_id, position.area_id]]
       retreat_areas = if position.army?
         position.area.neighboring_areas.army_accessible
       else
@@ -44,13 +44,12 @@ module OrderService
         # the previous turn, or where the attacking order that dislodged the unit came from
         contains_unit = all_unit_positions.map(&:area).include?(area)
         stand_off_last_turn = (previous_turn_order_resolutions[:bounced] || []).any? do |order|
-          order.to == area
+          order.to == position.area
         end
         dislodger_source = (previous_turn_order_resolutions[:resolved] || []).find do |order|
-          order.move? && order.to == area
+          order.move? && order.to == position.area
         end
-
-        contains_unit || stand_off_last_turn || dislodger_source&.area == area
+        contains_unit || stand_off_last_turn || dislodger_source&.from == area
       end
       if retreat_areas.present?
         position_order_map['retreat'] = retreat_areas.map { |area| [position.area_id, area.id] }

@@ -130,6 +130,33 @@ class OrderServiceTest < ActiveSupport::TestCase
     )
   end
 
+  test "valid_retreat_orders" do
+    previous_turn = create(:turn, type: 'spring', number: 6)
+    turn = create(:turn, type: 'spring_retreat', number: 7, game: previous_turn.game)
+    austria = create(:user_game, game: turn.game, power: 'austria')
+    turkey = create(:user_game, game: turn.game, power: 'turkey')
+
+    budapest = Area.find_by_name('Budapest')
+    galicia = Area.find_by_name('Galicia')
+    vienna = Area.find_by_name('Vienna')
+
+    prev_budapest_position = create(:position, area: budapest, type: 'army', turn: previous_turn, user_game: turkey)
+    prev_galicia_position = create(:position, area: galicia, type: 'army', turn: previous_turn, user_game: austria)
+    prev_vienna_position = create(:position, area: vienna, type: 'army', turn: previous_turn, user_game: austria)
+
+    move = create(:order, type: 'move', from: vienna, to: budapest, position: prev_vienna_position, turn: previous_turn, user_game: austria)
+    support = create(:order, type: 'support', from: vienna, to: budapest, position: prev_galicia_position, turn: previous_turn, user_game: austria)
+    dislodged = create(:order, type: 'move', from: budapest, to: galicia, position: prev_budapest_position, turn: previous_turn, user_game: turkey)
+
+    budapest_position = create(:position, area: budapest, type: 'army', turn: turn, user_game: turkey, dislodged: true)
+    galicia_position = create(:position, area: galicia, type: 'army', turn: turn, user_game: austria)
+    vienna_position = create(:position, area: budapest, type: 'army', turn: turn, user_game: austria)
+
+    retreat_options = OrderService.valid_retreat_orders(turkey, turn.positions, turn)
+    assert_equal([['Budapest', 'Budapest']], parse_order_results(retreat_options[budapest_position.id]['disband']))
+    assert_equal([['Budapest', 'Rumania'], ['Budapest', 'Serbia'], ['Budapest', 'Trieste']], parse_order_results(retreat_options[budapest_position.id]['retreat']))
+  end
+
   test "resolve-invalid_support" do
     albania = Area.find_by_name('Albania')
     bulgaria = Area.find_by_name('Bulgaria')
@@ -353,6 +380,25 @@ class OrderServiceTest < ActiveSupport::TestCase
     assert_equal([:resolved], OrderService.resolve(move3))
     assert_equal([:resolved], OrderService.resolve(support))
     assert_equal([:broken, move3], OrderService.resolve(move2))
+  end
+
+  test "resolve_three_way_swap" do
+    turn = create(:turn)
+    budapest = Area.find_by_name('Budapest')
+    galicia = Area.find_by_name('Galicia')
+    vienna = Area.find_by_name('Vienna')
+
+    budapest_position = create(:position, area: budapest, type: 'army', turn: turn)
+    galicia_position = create(:position, area: galicia, type: 'army', turn: turn)
+    vienna_position = create(:position, area: vienna, type: 'army', turn: turn)
+
+    move1 = create(:order, type: 'move', from: budapest, to: galicia, position: budapest_position, turn: turn)
+    move2 = create(:order, type: 'move', from: galicia, to: vienna, position: galicia_position, turn: turn)
+    move3 = create(:order, type: 'move', from: vienna, to: budapest, position: vienna_position, turn: turn)
+
+    assert_equal([:resolved], OrderService.resolve(move1))
+    assert_equal([:resolved], OrderService.resolve(move2))
+    assert_equal([:resolved], OrderService.resolve(move3))
   end
 
   private
