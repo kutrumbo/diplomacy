@@ -180,11 +180,9 @@ export default function Orders(props) {
             />
           )}
           <tr>
-            <td />
-            <td />
-            <td />
-            <td />
-            <td />
+            <td colspan="5">
+              {error && <div className="notification is-warning is-light">{error.message}</div>}
+            </td>
             <td>
               <button
                 className={`button is-primary${loading ? ' is-loading' : ''}`}
@@ -195,7 +193,6 @@ export default function Orders(props) {
           </tr>
         </tbody>
       </table>
-      {error && <div className="notification is-warning is-light">{error.message}</div>}
     </>
   );
 }
