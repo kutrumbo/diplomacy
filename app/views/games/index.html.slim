@@ -7,8 +7,8 @@ div[class="container"]
             = link_to game_path(game)
               div[class="card card-game"]
                 div[class="card-header"]
-                  p[class="card-header-title"] = "#{game.name} (#{game.current_turn.type.capitalize} #{game.current_turn.year})"
+                  p[class="card-header-title"] = "#{game.name} (#{game.current_turn.type.humanize} #{game.current_turn.year})"
                 div[class="card-content"]
-                  = render partial: 'players', locals: { game: game, hide_header: true }
+                  = render partial: 'players', locals: { game: game }
     - else
       p No active games

@@ -148,15 +148,13 @@ export default function Orders(props) {
   if (isEmpty(orders)) {
     return (
       <>
-        <h2 className="subtitle is-5">Orders</h2>
-        <p>No possible orders</p>
+        <h2 className="subtitle is-5">No possible orders</h2>
       </>
     )
   }
 
   return (
     <>
-      <h2 className="subtitle is-5">Orders</h2>
       <table className="table is-fullwidth">
         <thead>
           <tr>

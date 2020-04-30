@@ -14,13 +14,15 @@ class Position < ApplicationRecord
   validates_inclusion_of :power, in: UserGame::POWER_TYPES, allow_nil: true
 
   scope :with_unit, -> { where.not(type: nil) }
+  scope :with_army, -> { where(type: 'army') }
+  scope :with_fleet, -> { where(type: 'fleet') }
   scope :unoccupied, -> { where(type: nil) }
   scope :supply_center, -> { joins(:area).where(areas: { supply_center: true }) }
   scope :occupied, -> { where.not(power: nil) }
   scope :retreating, -> { where(dislodged: true) }
   scope :turn, -> (turn) { where(turn: turn) }
   scope :includes_areas, -> { includes(area: [:neighboring_areas, :neighboring_coasts]) }
-  scope :power, -> (power) { joins(:area).where(areas: { power: power }) }
+  scope :power, -> (power) { where(power: power) }
 
   def army?
     self.type == 'army'

@@ -19,6 +19,7 @@ class Order < ApplicationRecord
   scope :support, -> { where(type: 'support') }
   scope :from_area, -> (from) { where(from: from) }
   scope :to_area, -> (to) { where(to: to) }
+  scope :turn, -> (turn) { where(turn: turn) }
 
   after_update { |order| TurnService.process_turn(order.turn) }
 

@@ -12,8 +12,12 @@ div[class="container"]
       = csrf_meta_tags
       = react_component('Orders', { areas: @areas, orders: @orders, positions: @positions, user_game: @user_game, valid_orders: @valid_orders })
     hr
-    div[class="columns"]
-      div[class="column is-one-quarter"]
-        = render partial: 'players', locals: { game: @game }
-      div[class="column"]
-        = image_tag 'diplomacy_map.jpg'
+    = image_tag 'diplomacy_map.jpg'
+    hr
+    = render partial: 'players', locals: { game: @game }
+  footer[class="footer"]
+    p
+      | Icons made by
+      =<> link_to 'Freepik', 'https://www.flaticon.com/authors/freepik'
+      | from
+      =<> link_to 'www.flaticon.com', 'https://www.flaticon.com/'
