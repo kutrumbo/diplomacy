@@ -32,4 +32,8 @@ class Position < ApplicationRecord
   def fleet?
     self.type == 'fleet'
   end
+
+  def coast?
+    self.coast.present?
+  end
 end

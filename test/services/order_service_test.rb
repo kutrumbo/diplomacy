@@ -8,7 +8,7 @@ class OrderServiceTest < ActiveSupport::TestCase
     orders = OrderService.valid_move_orders(current_position, [])
 
     assert_equal(
-      [['Greece', 'Aegean Sea'], ['Greece', 'Albania'], ['Greece', 'Bulgaria'], ['Greece', 'Ionian Sea']],
+      [['Greece', 'Aegean Sea'], ['Greece', 'Albania'], ['Greece', ['Bulgaria', 'south']], ['Greece', 'Ionian Sea']],
       parse_order_results(orders),
     )
   end
@@ -22,7 +22,7 @@ class OrderServiceTest < ActiveSupport::TestCase
     orders = OrderService.valid_move_orders(current_position, [])
 
     assert_equal(
-      [['Bulgaria', 'Aegean Sea'], ['Bulgaria', 'Constantinople'], ['Bulgaria', 'Greece']],
+      [[['Bulgaria', 'south'], 'Aegean Sea'], [['Bulgaria', 'south'], 'Constantinople'], [['Bulgaria', 'south'], 'Greece']],
       parse_order_results(orders),
     )
   end
@@ -95,7 +95,7 @@ class OrderServiceTest < ActiveSupport::TestCase
     orders = OrderService.valid_support_orders(current_position, [aegean_sea_fleet, black_sea_fleet, budapest_army, warsaw_army])
 
     assert_equal(
-      [['Aegean Sea', 'Bulgaria'], ['Black Sea', 'Bulgaria'], ['Black Sea', 'Sevastopol'], ['Budapest', 'Budapest'], ['Budapest', 'Galicia'], ['Budapest', 'Serbia'], ['Warsaw', 'Galicia'], ['Warsaw', 'Ukraine']],
+      [['Aegean Sea', ['Bulgaria', 'south']], ['Black Sea', ['Bulgaria', 'east']], ['Black Sea', 'Sevastopol'], ['Budapest', 'Budapest'], ['Budapest', 'Galicia'], ['Budapest', 'Serbia'], ['Warsaw', 'Galicia'], ['Warsaw', 'Ukraine']],
       parse_order_results(orders),
     )
   end
@@ -418,7 +418,17 @@ class OrderServiceTest < ActiveSupport::TestCase
 
   def parse_order_results(orders)
     orders.map do |order|
-      [order.first && Area.find(order.first).name, order.last && Area.find(order.last).name]
-    end.sort
+      from = if order.first.kind_of?(Array)
+        [Area.find(order.first.first).name, Coast.find(order.first.last).direction]
+      else
+        Area.find(order.first).name
+      end
+      to = if order.last.kind_of?(Array)
+        [Area.find(order.last.first).name, Coast.find(order.last.last).direction]
+      else
+        Area.find(order.last).name
+      end
+      [from, to]
+    end.sort_by { |pairs| pairs.flatten }
   end
 end

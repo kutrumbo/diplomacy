@@ -34,11 +34,11 @@ module OrderService
     previous_turn_order_resolutions = OrderService.resolve_orders(turn.previous_turn)
     user_game.positions.retreating.turn(turn).reduce({}) do |order_map, position|
       position_order_map = {}
-      position_order_map['disband'] = [[position.area_id, position.area_id]]
+      position_order_map['disband'] = position.coast? ? [[position.area_id, [position.area_id, position.coast_id]]] : [[position.area_id, position.area_id]]
       retreat_areas = if position.army?
-        position.area.neighboring_areas.army_accessible
+        position.neighboring_areas.army_accessible
       else
-        position.area.neighboring_areas.fleet_accessible
+        position.neighboring_areas.fleet_accessible
       end.reject do |area|
         # cannot retreat to area where there is another unit, where there was a stand-off
         # the previous turn, or where the attacking order that dislodged the unit came from
@@ -52,7 +52,16 @@ module OrderService
         contains_unit || stand_off_last_turn || dislodger_source&.from == area
       end
       if retreat_areas.present?
-        position_order_map['retreat'] = retreat_areas.map { |area| [position.area_id, area.id] }
+        position_order_map['retreat'] = []
+        retreat_areas.map do |area|
+          if area.coasts?
+            area.coasts.select { |c| position.neighboring_coasts.include?(c) }.map do |coast|
+              position_order_map['retreat'] << [position.area_id, [area.id, coast.id]]
+            end
+          else
+            position_order_map['retreat'] << [position.area_id, area.id]
+          end
+        end
       end
       order_map[position.id] = position_order_map
       order_map
@@ -70,15 +79,27 @@ module OrderService
           'no_build' => [[position.area_id, position.area_id]],
           'build_army' => [[position.area_id, position.area_id]],
         }
-        position_order_map['build_fleet'] = [[position.area_id, position.area_id]] if position.area.coastal?
+        if position.area.coastal?
+          position_order_map['build_fleet'] = if position.area.coast?
+            coast = Coast.find_by(area: position.area, direction: position.area.coast)
+            [[[position.area_id, coast.id], [position.area_id, coast.id]]]
+          else
+            [[position.area_id, position.area_id]]
+          end
+        end
         order_map[position.id] = position_order_map
         order_map
       end
     else
       positions.with_unit.reduce({}) do |order_map, position|
+        order_detail = if position.coast?
+          [[[position.area_id, position.coast_id], [position.area_id, position.coast_id]]]
+        else
+          [[position.area_id, position.area_id]]
+        end
         order_map[position.id] = {
-          'disband' => [[position.area_id, position.area_id]],
-          'keep' => [[position.area_id, position.area_id]],
+          'disband' => order_detail,
+          'keep' => order_detail,
         }
         order_map
       end
@@ -87,7 +108,9 @@ module OrderService
 
   def self.valid_move_orders(current_position, other_unit_positions)
     possible_paths(current_position, other_unit_positions).map do |path|
-      [current_position.area_id, path.last.id]
+      from = current_position.coast? ? [current_position.area_id, current_position.coast_id] : current_position.area_id
+      to = path.last.kind_of?(Array) ? [path.last.first.id, path.last.last.id] : path.last.id
+      [from, to]
     end.uniq
   end
 
@@ -99,7 +122,8 @@ module OrderService
 
       # allow supporting any move from another position to an accessible area
       valid_move_orders(position, other_unit_positions.without(position, current_position)).filter do |details|
-        support_areas.map(&:id).include?(details.last)
+        support_area = details.last.kind_of?(Array) ? details.last.first : details.last
+        support_areas.map(&:id).include?(support_area)
       end.each do |details|
         orders << [position.area.id, details.last]
       end
@@ -296,7 +320,9 @@ module OrderService
 
   def self.supportable_areas(position)
     if position.fleet?
-      fleet_possible_paths(position).map(&:last)
+      fleet_possible_paths(position).map do |path|
+        path.last.kind_of?(Array) ? path.last.first : path.last
+      end
     else
       position.neighboring_areas.army_accessible
     end
@@ -313,11 +339,20 @@ module OrderService
   end
 
   def self.fleet_possible_paths(position)
+    paths = []
     position.neighboring_areas.fleet_accessible.reject do |area|
       position.coast.present? && !area.neighboring_coasts.include?(position.coast)
     end.map do |destination|
-      [position.area, destination]
+      from = position.coast? ? [position.area, position.coast] : position.area
+      if destination.coasts?
+        destination.coasts.select { |c| position.neighboring_coasts.include?(c) }.each do |coast|
+          paths << [from, [destination, coast]]
+        end
+      else
+        paths << [from, destination]
+      end
     end
+    paths
   end
 
   # Returns paths that an army can move to directly or via convoy

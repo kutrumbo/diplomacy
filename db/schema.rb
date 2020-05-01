@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_05_01_001228) do
+ActiveRecord::Schema.define(version: 2020_05_01_072343) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -61,8 +61,12 @@ ActiveRecord::Schema.define(version: 2020_05_01_001228) do
     t.bigint "from_id"
     t.bigint "to_id"
     t.boolean "confirmed", null: false
+    t.bigint "from_coast_id"
+    t.bigint "to_coast_id"
+    t.index ["from_coast_id"], name: "index_orders_on_from_coast_id"
     t.index ["from_id"], name: "index_orders_on_from_id"
     t.index ["position_id"], name: "index_orders_on_position_id"
+    t.index ["to_coast_id"], name: "index_orders_on_to_coast_id"
     t.index ["to_id"], name: "index_orders_on_to_id"
     t.index ["turn_id"], name: "index_orders_on_turn_id"
     t.index ["user_game_id"], name: "index_orders_on_user_game_id"
@@ -119,6 +123,8 @@ ActiveRecord::Schema.define(version: 2020_05_01_001228) do
   add_foreign_key "coasts", "areas"
   add_foreign_key "orders", "areas", column: "from_id"
   add_foreign_key "orders", "areas", column: "to_id"
+  add_foreign_key "orders", "coasts", column: "from_coast_id"
+  add_foreign_key "orders", "coasts", column: "to_coast_id"
   add_foreign_key "orders", "positions"
   add_foreign_key "orders", "turns"
   add_foreign_key "orders", "user_games"
