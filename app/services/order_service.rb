@@ -15,7 +15,7 @@ module OrderService
   def self.valid_attack_orders(user_game, all_unit_positions, turn)
     user_game.positions.with_unit.includes_areas.turn(turn).reduce({}) do |order_map, position|
       position_order_map = {}
-      position_order_map['hold'] = [[position.area_id, position.area_id]]
+      position_order_map['hold'] = [[[position.area_id, position.coast_id], [position.area_id, position.coast_id]]]
       moves = valid_move_orders(position, all_unit_positions.without(position))
       position_order_map['move'] = moves if moves.present?
       supports = valid_support_orders(position, all_unit_positions.without(position))
@@ -34,7 +34,7 @@ module OrderService
     previous_turn_order_resolutions = OrderService.resolve_orders(turn.previous_turn)
     user_game.positions.retreating.turn(turn).reduce({}) do |order_map, position|
       position_order_map = {}
-      position_order_map['disband'] = position.coast? ? [[position.area_id, [position.area_id, position.coast_id]]] : [[position.area_id, position.area_id]]
+      position_order_map['disband'] = [[[position.area_id, position.coast_id], [position.area_id, position.coast_id]]]
       retreat_areas = if position.army?
         position.neighboring_areas.army_accessible
       else
@@ -56,10 +56,10 @@ module OrderService
         retreat_areas.map do |area|
           if area.coasts?
             area.coasts.select { |c| position.neighboring_coasts.include?(c) }.map do |coast|
-              position_order_map['retreat'] << [position.area_id, [area.id, coast.id]]
+              position_order_map['retreat'] << [[position.area_id, position.coast_id], [area.id, coast.id]]
             end
           else
-            position_order_map['retreat'] << [position.area_id, area.id]
+            position_order_map['retreat'] << [[position.area_id, position.coast_id], [area.id, nil]]
           end
         end
       end
@@ -76,27 +76,19 @@ module OrderService
       build_positions.reduce({}) do |order_map, position|
         # TODO: do not allow no_build if they can build at all positions
         position_order_map = {
-          'no_build' => [[position.area_id, position.area_id]],
-          'build_army' => [[position.area_id, position.area_id]],
+          'no_build' => [[[position.area_id, position.coast_id], [position.area_id, position.coast_id]]],
+          'build_army' => [[[position.area_id, position.coast_id], [position.area_id, position.coast_id]]],
         }
         if position.area.coastal?
-          position_order_map['build_fleet'] = if position.area.coast?
-            coast = Coast.find_by(area: position.area, direction: position.area.coast)
-            [[[position.area_id, coast.id], [position.area_id, coast.id]]]
-          else
-            [[position.area_id, position.area_id]]
-          end
+          coast_id = position.area.coast? ? Coast.find_by(area: position.area, direction: position.area.coast).id : nil
+          position_order_map['build_fleet'] = [[[position.area_id, coast_id], [position.area_id, coast_id]]]
         end
         order_map[position.id] = position_order_map
         order_map
       end
     else
       positions.with_unit.reduce({}) do |order_map, position|
-        order_detail = if position.coast?
-          [[[position.area_id, position.coast_id], [position.area_id, position.coast_id]]]
-        else
-          [[position.area_id, position.area_id]]
-        end
+        order_detail = [[[position.area_id, position.coast_id], [position.area_id, position.coast_id]]]
         order_map[position.id] = {
           'disband' => order_detail,
           'keep' => order_detail,
@@ -108,8 +100,12 @@ module OrderService
 
   def self.valid_move_orders(current_position, other_unit_positions)
     possible_paths(current_position, other_unit_positions).map do |path|
-      from = current_position.coast? ? [current_position.area_id, current_position.coast_id] : current_position.area_id
-      to = path.last.kind_of?(Array) ? [path.last.first.id, path.last.last.id] : path.last.id
+      from = [current_position.area_id, current_position.coast_id]
+      to = if path.last.kind_of?(Array)
+        [path.last.first.id, path.last.last&.id]
+      else
+        [path.last.id, nil]
+      end
       [from, to]
     end.uniq
   end
@@ -118,14 +114,15 @@ module OrderService
     support_areas = supportable_areas(current_position)
     other_unit_positions.reduce([]) do |orders, position|
       # allow supporting a position to hold if it is an accessible area
-      orders << [position.area.id, position.area.id] if support_areas.include?(position.area)
+      if support_areas.include?(position.area)
+        orders << [[position.area_id, position.coast_id], [position.area_id, position.coast_id]]
+      end
 
       # allow supporting any move from another position to an accessible area
       valid_move_orders(position, other_unit_positions.without(position, current_position)).filter do |details|
-        support_area = details.last.kind_of?(Array) ? details.last.first : details.last
-        support_areas.map(&:id).include?(support_area)
+        support_areas.map(&:id).include?(details.last.first)
       end.each do |details|
-        orders << [position.area.id, details.last]
+        orders << [[position.area_id, position.coast_id], details.last]
       end
       orders
     end
@@ -146,7 +143,7 @@ module OrderService
         path.include?(current_position.area)
       end.map do |path|
         # only want start and destination areas
-        [path.first.id, path.last.id]
+        [[path.first.id, nil], [path.last.id, nil]]
       end.uniq
     end.flatten(1)
   end
@@ -320,9 +317,7 @@ module OrderService
 
   def self.supportable_areas(position)
     if position.fleet?
-      fleet_possible_paths(position).map do |path|
-        path.last.kind_of?(Array) ? path.last.first : path.last
-      end
+      fleet_possible_paths(position).map { |path| path.last.first }
     else
       position.neighboring_areas.army_accessible
     end
@@ -343,13 +338,13 @@ module OrderService
     position.neighboring_areas.fleet_accessible.reject do |area|
       position.coast.present? && !area.neighboring_coasts.include?(position.coast)
     end.map do |destination|
-      from = position.coast? ? [position.area, position.coast] : position.area
+      from = [position.area, position.coast]
       if destination.coasts?
         destination.coasts.select { |c| position.neighboring_coasts.include?(c) }.each do |coast|
           paths << [from, [destination, coast]]
         end
       else
-        paths << [from, destination]
+        paths << [from, [destination, nil]]
       end
     end
     paths

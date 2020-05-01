@@ -8,7 +8,7 @@ class OrderServiceTest < ActiveSupport::TestCase
     orders = OrderService.valid_move_orders(current_position, [])
 
     assert_equal(
-      [['Greece', 'Aegean Sea'], ['Greece', 'Albania'], ['Greece', ['Bulgaria', 'south']], ['Greece', 'Ionian Sea']],
+      [[['Greece', nil], ['Aegean Sea', nil]], [['Greece', nil], ['Albania', nil]], [['Greece', nil], ['Bulgaria', 'south']], [['Greece', nil], ['Ionian Sea', nil]]],
       parse_order_results(orders),
     )
   end
@@ -22,7 +22,7 @@ class OrderServiceTest < ActiveSupport::TestCase
     orders = OrderService.valid_move_orders(current_position, [])
 
     assert_equal(
-      [[['Bulgaria', 'south'], 'Aegean Sea'], [['Bulgaria', 'south'], 'Constantinople'], [['Bulgaria', 'south'], 'Greece']],
+      [[['Bulgaria', 'south'], ['Aegean Sea', nil]], [['Bulgaria', 'south'], ['Constantinople', nil]], [['Bulgaria', 'south'], ['Greece', nil]]],
       parse_order_results(orders),
     )
   end
@@ -35,7 +35,7 @@ class OrderServiceTest < ActiveSupport::TestCase
     orders = OrderService.valid_move_orders(current_position, [])
 
     assert_equal(
-      [['Rome', 'Naples'], ['Rome', 'Tuscany'], ['Rome', 'Tyrrhenian Sea']],
+      [[['Rome', nil], ['Naples', nil]], [['Rome', nil], ['Tuscany', nil]], [['Rome', nil], ['Tyrrhenian Sea', nil]]],
       parse_order_results(orders),
     )
   end
@@ -55,7 +55,7 @@ class OrderServiceTest < ActiveSupport::TestCase
     orders = OrderService.valid_move_orders(current_position, [aegean_fleet, eastern_med_fleet, ionian_sea_fleet])
 
     assert_equal(
-      [['Greece', 'Albania'], ['Greece', 'Apulia'], ['Greece', 'Bulgaria'], ['Greece', 'Constantinople'], ['Greece', 'Naples'], ['Greece', 'Serbia'], ['Greece', 'Smyrna'], ['Greece', 'Syria'], ['Greece', 'Tunis']],
+      [[['Greece', nil], ['Albania', nil]], [['Greece', nil], ['Apulia', nil]], [['Greece', nil], ['Bulgaria', nil]], [['Greece', nil], ['Constantinople', nil]], [['Greece', nil], ['Naples', nil]], [['Greece', nil], ['Serbia', nil]], [['Greece', nil], ['Smyrna', nil]], [['Greece', nil], ['Syria', nil]], [['Greece', nil], ['Tunis', nil]]],
       parse_order_results(orders),
     )
   end
@@ -73,7 +73,7 @@ class OrderServiceTest < ActiveSupport::TestCase
     orders = OrderService.valid_move_orders(current_position, [trieste_fleet, vienna_army])
 
     assert_equal(
-      [['Budapest', 'Galicia'], ['Budapest', 'Rumania'], ['Budapest', 'Serbia'], ['Budapest', 'Trieste'], ['Budapest', 'Vienna']],
+      [[['Budapest', nil], ['Galicia', nil]], [['Budapest', nil], ['Rumania', nil]], [['Budapest', nil], ['Serbia', nil]], [['Budapest', nil], ['Trieste', nil]], [['Budapest', nil], ['Vienna', nil]]],
       parse_order_results(orders),
     )
   end
@@ -95,7 +95,7 @@ class OrderServiceTest < ActiveSupport::TestCase
     orders = OrderService.valid_support_orders(current_position, [aegean_sea_fleet, black_sea_fleet, budapest_army, warsaw_army])
 
     assert_equal(
-      [['Aegean Sea', ['Bulgaria', 'south']], ['Black Sea', ['Bulgaria', 'east']], ['Black Sea', 'Sevastopol'], ['Budapest', 'Budapest'], ['Budapest', 'Galicia'], ['Budapest', 'Serbia'], ['Warsaw', 'Galicia'], ['Warsaw', 'Ukraine']],
+      [[['Aegean Sea', nil], ['Bulgaria', 'south']], [['Black Sea', nil], ['Bulgaria', 'east']], [['Black Sea', nil], ['Sevastopol', nil]], [['Budapest', nil], ['Budapest', nil]], [['Budapest', nil], ['Galicia', nil]], [['Budapest', nil], ['Serbia', nil]], [['Warsaw', nil], ['Galicia', nil]], [['Warsaw', nil], ['Ukraine', nil]]],
       parse_order_results(orders),
     )
   end
@@ -116,7 +116,7 @@ class OrderServiceTest < ActiveSupport::TestCase
     orders = OrderService.valid_support_orders(current_position, [aegean_sea_fleet, ankara_army, ukraine_army])
 
     assert_equal(
-      [['Aegean Sea', 'Aegean Sea'], ['Aegean Sea', 'Constantinople'], ['Aegean Sea', 'Greece'], ['Ankara', 'Constantinople']],
+      [[['Aegean Sea', nil], ['Aegean Sea', nil]], [['Aegean Sea', nil], ['Constantinople', nil]], [['Aegean Sea', nil], ['Greece', nil]], [['Ankara', nil], ['Constantinople', nil]]],
       parse_order_results(orders),
     )
   end
@@ -138,7 +138,7 @@ class OrderServiceTest < ActiveSupport::TestCase
     orders = OrderService.valid_convoy_orders(current_position, [eastern_med_fleet, greece_army, ionian_sea_fleet, tunis_army])
 
     assert_equal(
-      [['Greece', 'Albania'], ['Greece', 'Apulia'], ['Greece', 'Bulgaria'], ['Greece', 'Constantinople'], ['Greece', 'Naples'], ['Greece', 'Smyrna'], ['Greece', 'Syria'], ['Greece', 'Tunis'], ['Tunis', 'Bulgaria'], ['Tunis', 'Constantinople'], ['Tunis', 'Greece'], ['Tunis', 'Smyrna'], ['Tunis', 'Syria']],
+      [[['Greece', nil], ['Albania', nil]], [['Greece', nil], ['Apulia', nil]], [['Greece', nil], ['Bulgaria', nil]], [['Greece', nil], ['Constantinople', nil]], [['Greece', nil], ['Naples', nil]], [['Greece', nil], ['Smyrna', nil]], [['Greece', nil], ['Syria', nil]], [['Greece', nil], ['Tunis', nil]], [['Tunis', nil], ['Bulgaria', nil]], [['Tunis', nil], ['Constantinople', nil]], [['Tunis', nil], ['Greece', nil]], [['Tunis', nil], ['Smyrna', nil]], [['Tunis', nil], ['Syria', nil]]],
       parse_order_results(orders),
     )
   end
@@ -166,8 +166,8 @@ class OrderServiceTest < ActiveSupport::TestCase
     vienna_position = create(:position, area: budapest, type: 'army', turn: turn, user_game: austria)
 
     retreat_options = OrderService.valid_retreat_orders(turkey, turn.positions, turn)
-    assert_equal([['Budapest', 'Budapest']], parse_order_results(retreat_options[budapest_position.id]['disband']))
-    assert_equal([['Budapest', 'Rumania'], ['Budapest', 'Serbia'], ['Budapest', 'Trieste']], parse_order_results(retreat_options[budapest_position.id]['retreat']))
+    assert_equal([[['Budapest', nil], ['Budapest', nil]]], parse_order_results(retreat_options[budapest_position.id]['disband']))
+    assert_equal([[['Budapest', nil], ['Rumania', nil]], [['Budapest', nil], ['Serbia', nil]], [['Budapest', nil], ['Trieste', nil]]], parse_order_results(retreat_options[budapest_position.id]['retreat']))
   end
 
   test "resolve-invalid_support" do
@@ -418,16 +418,8 @@ class OrderServiceTest < ActiveSupport::TestCase
 
   def parse_order_results(orders)
     orders.map do |order|
-      from = if order.first.kind_of?(Array)
-        [Area.find(order.first.first).name, Coast.find(order.first.last).direction]
-      else
-        Area.find(order.first).name
-      end
-      to = if order.last.kind_of?(Array)
-        [Area.find(order.last.first).name, Coast.find(order.last.last).direction]
-      else
-        Area.find(order.last).name
-      end
+      from = [Area.find(order.first.first).name, Coast.find_by(id: order.first.last)&.direction]
+      to = [Area.find(order.last.first).name, Coast.find_by(id: order.last.last)&.direction]
       [from, to]
     end.sort_by { |pairs| pairs.flatten }
   end

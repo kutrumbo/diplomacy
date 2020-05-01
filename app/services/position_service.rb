@@ -50,7 +50,7 @@ module PositionService
     if next_positions_on_area.empty? && previous_position.power?
       new_position = previous_position.dup
       # if no new positions and previous position was claimed, create new position
-      new_position.update!(turn: upcoming_turn, type: nil)
+      new_position.update!(turn: upcoming_turn, type: nil, coast: nil)
     end
 
     previous_power = previous_position.power

@@ -15,7 +15,7 @@ class OrdersController < ApplicationController
     @user_game = current_user.user_games.find_by_game_id(params[:game_id])
     @turn = @user_game.game.current_turn
     permitted_orders = @user_game.orders.where(turn: @turn).pluck(:id).reduce({}) do |acc, id|
-      acc.merge(id.to_s.to_sym => [:type, :from_id, :to_id, :position_id, :confirmed])
+      acc.merge(id.to_s.to_sym => [:type, :from_id, :from_coast_id, :to_id, :to_coast_id, :position_id, :confirmed])
     end
     params.require(:orders).permit(permitted_orders)
   end
@@ -28,7 +28,7 @@ class OrdersController < ApplicationController
     end
     validations = orders.to_h.reduce({}) do |validation_map, (order_id, order)|
       permissible_orders = valid_orders[order[:position_id]][order[:type]]
-      unless permissible_orders.include?([order[:from_id], order[:to_id]])
+      unless permissible_orders.include?([[order[:from_id], order[:from_coast_id]], [order[:to_id], order[:to_coast_id]]])
         validation_map[order_id] = true
       end
       validation_map

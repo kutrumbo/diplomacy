@@ -1,43 +1,57 @@
 import React, { useState } from 'react'
-import { capitalize, filter, first, isEmpty, keys, last, map, startCase, uniq, values } from 'lodash';
+import { capitalize, filter, first, isEmpty, isEqual, keys, last, map, startCase, uniq, values } from 'lodash';
 
 function validFromOptions(order, validOrder, position) {
   if (order.type === 'support' || order.type === 'convoy') {
     return uniq(map(validOrder[order.type], detail => first(detail))).sort();
   } else {
-    return [position.area_id];
+    return [[position.area_id, position.coast_id]];
   }
 }
 
 function validToOptions(order, validOrder, position) {
   if (['hold', 'build_army', 'build_fleet', 'no_build'].includes(order.type)) {
-    return [position.area_id];
+    return [[position.area_id, position.coast_id]];
   }
   const orderDetails = validOrder[order.type];
   if (['move', 'retreat'].includes(order.type)) {
     return map(orderDetails, detail => last(detail)).sort();
   }
-  const validPaths = filter(orderDetails, detail => first(detail) === order.from_id);
+  const validPaths = filter(orderDetails, detail => isEqual(first(detail), [order.from_id, order.from_coast_id]));
   return uniq(map(validPaths, detail => last(detail))).sort();
 }
 
-function OrderRow({ areas, error, order, position, setError, updateOrders, validOrder }) {
+function areaLabel(areaCoastPair, areas, coasts) {
+  const areaName = areas[areaCoastPair[0]].name
+  const coastDirection = areaCoastPair[1] && coasts[areaCoastPair[1]].direction;
+  const coastName = coastDirection && `${coastDirection.charAt(0).toUpperCase()}C`
+  return coastName ? `${areaName} (${coastName})` : areaName;
+}
+
+function OrderRow({ areas, coasts, error, order, position, setError, updateOrders, validOrder }) {
   const fromOptions = validFromOptions(order, validOrder, position);
   const toOptions = validToOptions(order, validOrder, position);
 
   const handleSelect = (event) => {
     setError(null);
     const { name, value } = event.target;
-    let updatedOrder = { ...order, [name]: name === 'type' ? value : parseInt(value, 10) };
+    let updatedOrder = order;
+    if (name === 'type') {
+      updatedOrder[name] = value;
+    } else {
+      const areaCoastPair = JSON.parse(value);
+      updatedOrder[`${name}_id`] = areaCoastPair[0];
+      updatedOrder[`${name}_coast_id`] = areaCoastPair[1];
+    }
     if (name === 'type') {
       const updatedFromOptions = validFromOptions(updatedOrder, validOrder, position);
       const defaultValue = (updatedFromOptions.length === 1) ? updatedFromOptions[0] : '';
-      updatedOrder = { ...updatedOrder, from_id: defaultValue };
+      updatedOrder = { ...updatedOrder, from_id: defaultValue[0], from_coast_id: defaultValue[1] };
     }
-    if (name !== 'to_id') {
+    if (name !== 'to') {
       const updatedToOptions = validToOptions(updatedOrder, validOrder, position);
       const defaultValue = (updatedToOptions.length === 1) ? updatedToOptions[0] : '';
-      updatedOrder = { ...updatedOrder, to_id: defaultValue };
+      updatedOrder = { ...updatedOrder, to_id: defaultValue[0], to_coast_id: defaultValue[1] };
     }
     updateOrders(prevOrders => ({
       ...prevOrders,
@@ -59,7 +73,7 @@ function OrderRow({ areas, error, order, position, setError, updateOrders, valid
   return (
     <tr>
       <td>{capitalize(position.type)}</td>
-      <td>{areas[position.area_id].name}</td>
+      <td>{areaLabel([position.area_id, position.coast_id], areas, coasts)}</td>
       <td>
         <div className={`select is-rounded is-small${error ? ' is-danger' : ''}`}>
           <select value={order.type} name="type" onChange={handleSelect}>
@@ -74,12 +88,12 @@ function OrderRow({ areas, error, order, position, setError, updateOrders, valid
           <div className={`select is-small${error ? ' is-danger' : ''}`}>
             <select
               className="select-region"
-              value={order.from_id}
-              name="from_id"
+              value={JSON.stringify([order.from_id, order.from_coast_id])}
+              name="from"
               onChange={handleSelect}>
               {(order.from_id === '') && <option value="" disabled>---</option>}
-              {fromOptions.map(fromId =>
-                <option key={fromId} value={fromId}>{areas[fromId].name}</option>
+              {fromOptions.map(from =>
+                <option key={from} value={JSON.stringify(from)}>{areaLabel(from, areas, coasts)}</option>
               )}
             </select>
           </div>
@@ -90,12 +104,12 @@ function OrderRow({ areas, error, order, position, setError, updateOrders, valid
           <div className={`select is-small${error ? ' is-danger' : ''}`}>
             <select
               className="select-region"
-              value={order.to_id}
-              name="to_id"
+              value={JSON.stringify([order.to_id, order.to_coast_id])}
+              name="to"
               onChange={handleSelect}>
               {(order.to_id === '') && <option value="" disabled>---</option>}
-              {toOptions.map(toId =>
-                <option key={toId} value={toId}>{areas[toId].name}</option>
+              {toOptions.map(to =>
+                <option key={to} value={JSON.stringify(to)}>{areaLabel(to, areas, coasts)}</option>
               )}
             </select>
           </div>
@@ -170,6 +184,7 @@ export default function Orders(props) {
           {values(orders).map(order =>
             <OrderRow
               areas={props.areas}
+              coasts={props.coasts}
               error={error && error.validations[order.id]}
               key={order.id}
               order={order}
@@ -180,7 +195,7 @@ export default function Orders(props) {
             />
           )}
           <tr>
-            <td colspan="5">
+            <td colSpan="5">
               {error && <div className="notification is-warning is-light">{error.message}</div>}
             </td>
             <td>
