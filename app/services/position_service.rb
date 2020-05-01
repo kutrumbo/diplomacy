@@ -90,7 +90,7 @@ module PositionService
     when :resolved
       if order.move? || order.retreat?
         areas_previous_power = order.turn.positions.find { |p| order.to == p.area }&.power
-        next_position.update!(area: order.to, power: areas_previous_power)
+        next_position.update!(area: order.to, coast: order.to_coast, power: areas_previous_power)
       elsif order.build_fleet?
         next_position.update!(type: 'fleet')
       elsif order.build_army?
@@ -117,7 +117,7 @@ module PositionService
     if position.turn.attack?
       create_default_order(position, 'hold') if position.type?
     elsif position.turn.retreat?
-      create_default_order(position, 'retreat') if position.dislodged?
+      create_default_order(position, 'disband') if position.dislodged?
     elsif position.turn.build?
       create_default_build_order(position)
     end
@@ -137,7 +137,9 @@ module PositionService
       type: type,
       user_game: position.user_game,
       from_id: position.area_id,
+      from_coast_id: position.coast_id,
       to_id: position.area_id,
+      to_coast_id: position.coast_id,
       confirmed: false,
       position: position,
     )

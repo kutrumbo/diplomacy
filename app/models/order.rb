@@ -9,6 +9,8 @@ class Order < ApplicationRecord
   belongs_to :position
   belongs_to :from, class_name: 'Area', optional: true
   belongs_to :to, class_name: 'Area', optional: true
+  belongs_to :from_coast, class_name: 'Coast', optional: true
+  belongs_to :to_coast, class_name: 'Coast', optional: true
 
   delegate :power, to: :user_game
 

@@ -1,11 +1,13 @@
 import React from 'react'
 import { find, snakeCase } from 'lodash';
 
-function PositionIcon({ areas, positions, userGames }) {
+function PositionIcon({ areas, coasts, positions, userGames }) {
   const areaName = snakeCase(areas[positions[0].area_id].name);
+  const coastDirection = positions[0].coast_id && coasts[positions[0].coast_id].direction;
+  const areaClass = coastDirection ? `${areaName}_${coastDirection}` : areaName;
   if (positions.length === 1) {
     const position = positions[0];
-    const classNames = ['icon', 'icon-map', 'is-medium', areaName];
+    const classNames = ['icon', 'icon-map', 'is-medium', areaClass];
     const power = userGames[position.user_game_id].power;
     classNames.push(power);
     if (position.power == power) {
@@ -20,10 +22,10 @@ function PositionIcon({ areas, positions, userGames }) {
   } else {
     const unitPosition = find(positions, position => position.type);
     const unitPower = userGames[unitPosition.user_game_id].power;
-    const unitClassNames = ['icon', 'icon-map', 'is-medium', areaName, unitPower, unitPosition.type];
+    const unitClassNames = ['icon', 'icon-map', 'is-medium', areaClass, unitPower, unitPosition.type];
     const areaPosition = find(positions, position => !position.type);
     const areaPower = userGames[areaPosition.user_game_id].power;
-    const areaClassNames = ['icon', 'icon-map', 'is-medium', 'occupied-area', areaName, areaPower];
+    const areaClassNames = ['icon', 'icon-map', 'is-medium', 'occupied-area', areaClass, areaPower];
 
     return (
       <>
@@ -40,7 +42,12 @@ export default function PositionMap(props) {
     <div className="container-map">
       <img src={props.map_path} />
       {props.positions.map(positions =>
-        <PositionIcon key={positions[0].area_id} areas={props.areas} positions={positions} userGames={props.user_games} />
+        <PositionIcon
+          key={positions[0].area_id}
+          areas={props.areas}
+          coasts={props.coasts}
+          positions={positions}
+          userGames={props.user_games} />
       )}
     </div>
   );

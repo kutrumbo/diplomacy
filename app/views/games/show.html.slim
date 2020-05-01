@@ -12,7 +12,7 @@ div[class="container"]
       = csrf_meta_tags
       = react_component('Orders', { areas: @areas, orders: @orders, positions: @positions, user_game: @user_game, valid_orders: @valid_orders })
     hr
-    = react_component('PositionMap', { areas: @areas, map_path: image_path('diplomacy_map'), positions: @positions_by_area.values, user_games: @user_games })
+    = react_component('PositionMap', { areas: @areas, coasts: @coasts, map_path: image_path('diplomacy_map'), positions: @positions_by_area.values, user_games: @user_games })
     hr
     = render partial: 'players', locals: { game: @game, card_view: false }
   footer[class="footer"]
