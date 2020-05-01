@@ -10,10 +10,6 @@ module GameService
     end
   end
 
-  def self.declare_winner(user_game)
-    user_game.game.update!(user_game: user_game)
-  end
-
   private
 
   def self.assign_powers(game, users)

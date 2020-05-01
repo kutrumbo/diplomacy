@@ -23,7 +23,7 @@ function PositionIcon({ areas, coasts, positions, userGames }) {
     const unitPosition = find(positions, position => position.type);
     const unitPower = userGames[unitPosition.user_game_id].power;
     const unitClassNames = ['icon', 'icon-map', 'is-medium', areaClass, unitPower, unitPosition.type];
-    const areaPosition = find(positions, position => !position.type);
+    const areaPosition = find(positions, position => !position.type || position.dislodged);
     const areaPower = userGames[areaPosition.user_game_id].power;
     const areaClassNames = ['icon', 'icon-map', 'is-medium', 'occupied-area', areaClass, areaPower];
 

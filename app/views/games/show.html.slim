@@ -8,9 +8,12 @@ div[class="container"]
           => @turn.type.humanize
           | -
           =< @turn.year
-    = form_tag game_orders_path(@game)
-      = csrf_meta_tags
-      = react_component('Orders', { areas: @areas, coasts: @coasts, orders: @orders, positions: @positions, user_game: @user_game, valid_orders: @valid_orders })
+    - if @user_games.values.any?(&:winner)
+      p Game is over
+    - else
+      = form_tag game_orders_path(@game)
+        = csrf_meta_tags
+        = react_component('Orders', { areas: @areas, coasts: @coasts, orders: @orders, positions: @positions, user_game: @user_game, valid_orders: @valid_orders })
     hr
     = react_component('PositionMap', { areas: @areas, coasts: @coasts, map_path: image_path('diplomacy_map'), positions: @positions_by_area.values, user_games: @user_games })
     hr

@@ -74,7 +74,6 @@ module OrderService
     if builds_available > 0
       build_positions = positions.supply_center.unoccupied.power(user_game.power)
       build_positions.reduce({}) do |order_map, position|
-        # TODO: do not allow no_build if they can build at all positions
         position_order_map = {
           'no_build' => [[[position.area_id, position.coast_id], [position.area_id, position.coast_id]]],
           'build_army' => [[[position.area_id, position.coast_id], [position.area_id, position.coast_id]]],

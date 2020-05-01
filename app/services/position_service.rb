@@ -92,7 +92,7 @@ module PositionService
         areas_previous_power = order.turn.positions.find { |p| order.to == p.area }&.power
         next_position.update!(area: order.to, coast: order.to_coast, power: areas_previous_power)
       elsif order.build_fleet?
-        next_position.update!(type: 'fleet')
+        next_position.update!(type: 'fleet', coast: order.to_coast)
       elsif order.build_army?
         next_position.update!(type: 'army')
       elsif order.support? || order.convoy? || order.hold? || order.keep?
@@ -127,19 +127,20 @@ module PositionService
     positions = user_game.positions.turn(turn)
     supply_center_count = positions.supply_center.count
     unit_count = positions.with_unit.count
-    builds_available = supply_center_count - unit_count
+    max_builds = Area.supply_center.starting_power(user_game.power).count
+    builds_available = [supply_center_count - unit_count, max_builds].min
   end
 
   private
 
-  def self.create_default_order(position, type)
+  def self.create_default_order(position, type, override_coast_id=nil)
     position.turn.orders.create!(
       type: type,
       user_game: position.user_game,
       from_id: position.area_id,
-      from_coast_id: position.coast_id,
+      from_coast_id: override_coast_id || position.coast_id,
       to_id: position.area_id,
-      to_coast_id: position.coast_id,
+      to_coast_id: override_coast_id || position.coast_id,
       confirmed: false,
       position: position,
     )
@@ -149,7 +150,13 @@ module PositionService
     builds_available = PositionService.calculate_builds_available(position.user_game, position.turn)
     if builds_available > 0
       if position.type.nil? && position.area.supply_center? && position.area.power == position.user_game.power
-        create_default_order(position, 'no_build')
+        # make sure position is built on coast if Saint Petersburg
+        override_coast_id = if position.area.coast?
+          Coast.find_by(area: position.area, direction: position.area.coast).id
+        else
+          nil
+        end
+        create_default_order(position, 'no_build', override_coast_id)
       end
     elsif builds_available < 0
       create_default_order(position, 'keep') if position.type?
