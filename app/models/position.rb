@@ -9,6 +9,7 @@ class Position < ApplicationRecord
   has_one :user, through: :user_game
   has_one :game, through: :user_game
   has_many :neighboring_areas, through: :area
+  has_many :neighboring_coasts, through: :area
 
   validates_inclusion_of :type, in: POSITION_TYPES, allow_nil: true
   validates_inclusion_of :power, in: UserGame::POWER_TYPES, allow_nil: true
