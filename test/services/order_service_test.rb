@@ -13,7 +13,7 @@ class OrderServiceTest < ActiveSupport::TestCase
     )
   end
 
-  test "valid_move_orders-fleet_coast" do
+  test "valid_move_orders-fleet_area_with_coasts" do
     bulgaria = Area.find_by_name('Bulgaria')
     bulgaria_sc = Coast.find_by(area: bulgaria, direction: 'south')
 
@@ -23,6 +23,19 @@ class OrderServiceTest < ActiveSupport::TestCase
 
     assert_equal(
       [['Bulgaria', 'Aegean Sea'], ['Bulgaria', 'Constantinople'], ['Bulgaria', 'Greece']],
+      parse_order_results(orders),
+    )
+  end
+
+  test "valid_move_orders-fleet_coastal_without_coasts" do
+    rome = Area.find_by_name('Rome')
+
+    current_position = create(:position, area: rome, type: 'fleet')
+
+    orders = OrderService.valid_move_orders(current_position, [])
+
+    assert_equal(
+      [['Rome', 'Naples'], ['Rome', 'Tuscany'], ['Rome', 'Tyrrhenian Sea']],
       parse_order_results(orders),
     )
   end

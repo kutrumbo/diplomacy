@@ -14,9 +14,9 @@ class Area < ApplicationRecord
 
   scope :land, -> { where(type: 'land') }
   scope :sea, -> { where(type: 'sea') }
-  scope :coastal, -> { land.includes(:neighboring_areas).where(neighboring_areas_areas: { type: 'sea' }).distinct }
+  scope :coastal, -> { land.includes(:neighboring_areas).where(borders: { coastal: true }, neighboring_areas_areas: { type: 'sea' }) }
   scope :army_accessible, -> { land }
-  scope :fleet_accessible, -> { includes(:neighboring_areas).sea.distinct.or(coastal) }
+  scope :fleet_accessible, -> { includes(:neighboring_areas).sea.or(coastal).distinct }
   scope :has_coasts, -> { joins(:coasts).distinct }
   scope :supply_center, -> { where(supply_center: true) }
   scope :starting_army, -> { where(unit: 'army') }
