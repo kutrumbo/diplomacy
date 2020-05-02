@@ -72,7 +72,7 @@ module OrderService
     positions = user_game.positions.turn(turn)
     builds_available = PositionService.calculate_builds_available(user_game, turn)
     if builds_available > 0
-      build_positions = positions.supply_center.unoccupied.power(user_game.power)
+      build_positions = positions.supply_center.no_unit.power(user_game.power)
       build_positions.reduce({}) do |order_map, position|
         position_order_map = {
           'no_build' => [[[position.area_id, position.coast_id], [position.area_id, position.coast_id]]],

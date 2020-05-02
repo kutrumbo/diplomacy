@@ -41,26 +41,23 @@ module PositionService
   end
 
   def self.process_previous_attack_position(previous_position, new_positions, upcoming_turn)
+    # unit positions are handled via order processing
+    return if previous_position.type.present?
+
     # there can be multiple new positions on an area in cases of dislodgement
     next_positions_on_area = new_positions.select do |p|
       previous_position.area == p.area
     end
+    previous_power = previous_position.power
+    return if previous_power.nil?
 
     # if there are no new positions on the area and it was previously occupied, it remains occupied
-    if next_positions_on_area.empty? && previous_position.power?
+    if next_positions_on_area.empty? || next_positions_on_area.any? {|p| p.user_game.power != previous_power }
+      # if no new positions and previous position was claimed then create new position
+      # or if spot was previously occupied and a unit from a different power now is on the area
+      # then keep the non-unit position of the previous power
       new_position = previous_position.dup
-      # if no new positions and previous position was claimed, create new position
       new_position.update!(turn: upcoming_turn, type: nil, coast: nil)
-    end
-
-    previous_power = previous_position.power
-    if previous_power.present? && previous_position.type.nil?
-      if next_positions_on_area.any? {|p| p.user_game.power != previous_power }
-        # if spot was previously occupied and a unit from a different power now is on the area
-        # then keep the spot occupied by the previous power
-        new_position = previous_position.dup
-        new_position.update!(turn: upcoming_turn, type: nil)
-      end
     end
   end
 

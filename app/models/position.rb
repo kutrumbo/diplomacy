@@ -17,7 +17,7 @@ class Position < ApplicationRecord
   scope :with_unit, -> { where.not(type: nil) }
   scope :with_army, -> { where(type: 'army') }
   scope :with_fleet, -> { where(type: 'fleet') }
-  scope :unoccupied, -> { where(type: nil) }
+  scope :no_unit, -> { where(type: nil) }
   scope :supply_center, -> { joins(:area).where(areas: { supply_center: true }) }
   scope :occupied, -> { where.not(power: nil) }
   scope :retreating, -> { where(dislodged: true) }
