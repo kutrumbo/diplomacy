@@ -5,28 +5,20 @@ function validFromOptions(order, validOrder, position, areas, coasts) {
   if (order.type === 'support' || order.type === 'convoy') {
     return sortOptions(uniqWith(map(validOrder[order.type], detail => first(detail)), isEqual), areas, coasts);
   } else {
-    const coastId = (order.type === 'build_fleet') ? fleetCoastId(position, areas, coasts) : position.coast_id;
-    return [[position.area_id, coastId]];
+    return [[position.area_id, position.coast_id]];
   }
 }
 
 function validToOptions(order, validOrder, position, areas, coasts) {
-  if (['hold', 'build_army', 'build_fleet', 'no_build'].includes(order.type)) {
-    const coastId = (order.type === 'build_fleet') ? fleetCoastId(position, areas, coasts) : position.coast_id;
-    return [[position.area_id, coastId]];
+  if (['hold', 'build_army', 'no_build'].includes(order.type)) {
+    return [[position.area_id, position.coast_id]];
   }
   const orderDetails = validOrder[order.type];
-  if (['move', 'retreat'].includes(order.type)) {
+  if (['move', 'retreat', 'build_fleet'].includes(order.type)) {
     return sortOptions(map(orderDetails, detail => last(detail)), areas, coasts);
   }
   const validPaths = filter(orderDetails, detail => isEqual(first(detail), [order.from_id, order.from_coast_id]));
   return sortOptions(uniqWith(map(validPaths, detail => last(detail)), isEqual), areas, coasts);
-}
-
-function fleetCoastId(position, areas, coasts) {
-  const coastDirection = areas[position.area_id].direction;
-  const coast = coastDirection && find(coasts, coast => coast.direction === coastDirection && coast.area_id === position.area_id);
-  return coast && coast.id;
 }
 
 function sortOptions(areaCoastPairs, areas, coasts) {
@@ -80,7 +72,8 @@ function OrderRow({ areas, coasts, error, order, position, setError, updateOrder
   }
 
   const showFrom = ['convoy', 'support'].includes(order.type);
-  const showTo = ['convoy', 'move', 'retreat', 'support'].includes(order.type);
+  const buildFleetToCoast = order.type === 'build_fleet' && toOptions.length > 1;
+  const showTo = ['convoy', 'move', 'retreat', 'support'].includes(order.type) || buildFleetToCoast;
 
   return (
     <tr>

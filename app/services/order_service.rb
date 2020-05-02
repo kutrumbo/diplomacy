@@ -79,8 +79,13 @@ module OrderService
           'build_army' => [[[position.area_id, position.coast_id], [position.area_id, position.coast_id]]],
         }
         if position.area.coastal?
-          coast_id = position.area.coast? ? Coast.find_by(area: position.area, direction: position.area.coast).id : nil
-          position_order_map['build_fleet'] = [[[position.area_id, coast_id], [position.area_id, coast_id]]]
+          position_order_map['build_fleet'] = if position.area.coast?
+            position.area.coasts.map do |coast|
+              [[position.area_id, nil], [position.area_id, coast.id]]
+            end
+          else
+            [[[position.area_id, nil], [position.area_id, nil]]]
+          end
         end
         order_map[position.id] = position_order_map
         order_map
