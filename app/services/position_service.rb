@@ -41,32 +41,33 @@ module PositionService
   end
 
   def self.process_previous_attack_position(previous_position, new_positions, upcoming_turn)
+    previous_area_power = previous_position.power
+    # return if area was not occupied previous turn
+    return if previous_area_power.nil?
+
+    previous_position_power = previous_position.user_game.power
+    # return if this position was not the occupying power last turn
+    return if previous_position_power != previous_area_power
+
     # there can be multiple new positions on an area in cases of dislodgement
     next_positions_on_area = new_positions.select do |p|
       previous_position.area == p.area
     end
-    previous_power = previous_position.power
-    return if previous_power.nil?
-
-    if previous_position.type.present?
-      # if there was previously a unit on the space of the area power, it stays occupied
-      if next_positions_on_area.empty? && previous_power == previous_position.user_game.power
-        new_position = previous_position.dup
-        new_position.update!(turn: upcoming_turn, type: nil, coast: nil)
-      end
-    elsif next_positions_on_area.empty? || next_positions_on_area.any? {|p| p.user_game.power != previous_power }
-      # if no new positions and previous position was claimed then create new position
-      # or if spot was previously occupied and a unit from a different power now is on the area
-      # then keep the non-unit position of the previous power
-      new_position = previous_position.dup
-      new_position.update!(turn: upcoming_turn, type: nil, coast: nil)
+    # return if unit of same power is one of next positions
+    return if next_positions_on_area.any? do |p|
+      p.user_game.power == previous_area_power && p.type.present?
     end
+
+    new_position = previous_position.dup
+    new_position.update!(turn: upcoming_turn, type: nil, coast: nil)
   end
 
   # create new positions for all old positions except ones that were dislodged
   def self.process_previous_retreat_position(previous_position, new_positions, upcoming_turn)
-    unless previous_position.dislodged?
-      new_position = previous_position.dup
+    new_position = previous_position.dup
+    if previous_position.dislodged?
+      new_position.update!(turn: upcoming_turn, dislodged: false, type: nil)
+    elsif !new_positions.any? { |p| p.area == previous_position.area }
       new_position.update!(turn: upcoming_turn)
     end
   end
@@ -89,7 +90,7 @@ module PositionService
     when :resolved
       if order.move? || order.retreat?
         areas_previous_power = order.turn.positions.find { |p| order.to == p.area }&.power
-        next_position.update!(area: order.to, coast: order.to_coast, power: areas_previous_power)
+        next_position.update!(area: order.to, coast: order.to_coast, power: areas_previous_power, dislodged: false)
       elsif order.build_fleet?
         next_position.update!(type: 'fleet', coast: order.to_coast)
       elsif order.build_army?
@@ -102,7 +103,7 @@ module PositionService
         raise "Not implemented: resolved order of type: #{order.type}"
       end
     when :dislodged
-      next_position.update!(dislodged: true, power: nil)
+      next_position.update!(dislodged: true)
     when :cancelled, :invalid, :bounced
       next_position.save!
     when :failed
