@@ -8,6 +8,7 @@ nav[class="navbar"]
     div[class="navbar-start"]
       - if current_user.present?
         = link_to 'Games', games_path, class: 'navbar-item'
+        = link_to 'Map', map_path, class: 'navbar-item'
     div[class="navbar-end"]
       - if current_user.present?
         = link_to 'Sign out', logout_path, class: 'navbar-item'

@@ -28,4 +28,7 @@ class GamesController < ApplicationController
       end.group_by { |pair| pair.first.user_game }
     end
   end
+
+  def map
+  end
 end

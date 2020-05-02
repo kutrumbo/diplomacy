@@ -7,6 +7,7 @@ Rails.application.routes.draw do
   resources :games, only: [:index, :show] do
     put 'orders', to: 'orders#update'
   end
+  get 'map', to: 'games#map'
 
   get 'signup', to: 'users#new', as: 'signup'
   get 'login', to: 'sessions#new', as: 'login'
