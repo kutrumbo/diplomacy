@@ -6,4 +6,7 @@ nav[class="navbar"]
       - if current_user.present?
         = link_to 'Sign out', logout_path, class: 'navbar-item'
       - else
-        = link_to 'Sign in', login_path, class: 'navbar-item'
+        - if current_page?('/signup')
+          = link_to 'Login', login_path, class: 'navbar-item'
+        - else
+          = link_to 'Sign up', signup_path, class: 'navbar-item'
