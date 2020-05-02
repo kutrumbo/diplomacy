@@ -173,7 +173,7 @@ export default function Orders(props) {
   }
 
   return (
-    <>
+    <div className="table-container">
       <table className="table is-fullwidth">
         <thead>
           <tr>
@@ -213,6 +213,6 @@ export default function Orders(props) {
           </tr>
         </tbody>
       </table>
-    </>
+    </div>
   );
 }

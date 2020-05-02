@@ -5,7 +5,7 @@ div[class="container"]
         h1[class="title is-3"] = @game.name
       div[class="level-right"]
         h1[class="title is-3"]
-          => @turn.type.humanize
+          => @turn.type.titlecase
           | -
           =< @turn.year
     - if @user_games.values.any?(&:winner)
@@ -17,7 +17,12 @@ div[class="container"]
     hr
     = react_component('PositionMap', { areas: @areas, coasts: @coasts, map_path: image_path('diplomacy_map.jpg'), positions: @positions_by_area.values, user_games: @user_games })
     hr
-    = render partial: 'players', locals: { game: @game, card_view: false }
+    div[class="columns"]
+      div[class="column"]
+        = render partial: 'players', locals: { game: @game, card_view: false }
+      div[class="column"]
+        - if @order_resolutions
+          = render partial: 'resolutions'
   footer[class="footer"]
     p
       | Icons from
