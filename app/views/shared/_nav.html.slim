@@ -1,12 +1,18 @@
 nav[class="navbar"]
-  div[class="navbar-menu"]
+  div[class="navbar-brand"]
+    a class="navbar-burger" role="button" data={target: 'navMenu'}
+      span[aria-hidden="true"]
+      span[aria-hidden="true"]
+      span[aria-hidden="true"]
+  div[class="navbar-menu", id="navMenu"]
     div[class="navbar-start"]
-      = link_to 'Games', games_path, class: 'navbar-item'
+      - if current_user.present?
+        = link_to 'Games', games_path, class: 'navbar-item'
     div[class="navbar-end"]
       - if current_user.present?
         = link_to 'Sign out', logout_path, class: 'navbar-item'
       - else
         - if current_page?('/signup')
-          = link_to 'Login', login_path, class: 'navbar-item'
+          = link_to 'Sign in', login_path, class: 'navbar-item'
         - else
           = link_to 'Sign up', signup_path, class: 'navbar-item'
