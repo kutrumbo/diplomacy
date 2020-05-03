@@ -7,4 +7,6 @@ class User < ApplicationRecord
   has_many :positions
 
   validates :email, presence: true, uniqueness: true
+
+  before_create { |user| user.email = user.email.downcase }
 end

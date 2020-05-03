@@ -1,0 +1,16 @@
+div[class="container container-sign-in"]
+  div[class="box margin-large"]
+    h1[class="title is-3"] Settings
+    = form_tag user_path, method: 'put', class: 'form' do |form|
+      - if notice.present?
+        div[class="field"]
+          div[class="notification is-success is-light"]
+            p = notice
+      div[class="field"]
+        = label_tag :name, nil, class: 'label'
+        = text_field :user, :name, class: 'input'
+      div[class="field"]
+        = label_tag :password, nil, class: 'label'
+        = password_field :user, :password, class: 'input'
+      div[class="field"]
+        = submit_tag "Update", class: 'button is-primary'

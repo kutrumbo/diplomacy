@@ -11,6 +11,7 @@ nav[class="navbar"]
         = link_to 'Map', map_path, class: 'navbar-item'
     div[class="navbar-end"]
       - if current_user.present?
+        = link_to 'Settings', user_path(current_user), class: 'navbar-item'
         = link_to 'Sign out', logout_path, class: 'navbar-item'
       - else
         - if current_page?('/signup')

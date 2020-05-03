@@ -3,7 +3,7 @@ Rails.application.routes.draw do
   root 'games#index'
 
   resources :sessions, only: [:new, :create, :destroy]
-  resources :users, only: [:new, :create]
+  resources :users, only: [:new, :create, :show,:update]
   resources :games, only: [:index, :show] do
     put 'orders', to: 'orders#update'
     resources :turns, only: [] do
