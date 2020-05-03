@@ -1,9 +1,0 @@
-- @user_games.values.each do |user_game|
-  - resolutions = @order_resolutions[user_game]
-  - if resolutions
-    p[class="has-text-weight-bold"] = user_game.power.capitalize
-    ul
-    - resolutions.each do |pair|
-      - formatted_resolution = format_order_resolution(*pair)
-      - if formatted_resolution
-        li = formatted_resolution

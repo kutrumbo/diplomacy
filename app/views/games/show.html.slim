@@ -21,8 +21,8 @@ div[class="container"]
       div[class="column"]
         = render partial: 'players', locals: { game: @game, card_view: false }
       div[class="column"]
-        - if @order_resolutions
-          = render partial: 'resolutions'
+        - if @game.turns.size > 1
+          = react_component('OrderHistory', { areas: @areas, coasts: @coasts, game: @game, turns: @game.turns.order('number DESC').without(@turn), user_games: @user_games })
   footer[class="footer"]
     p
       | Icons from

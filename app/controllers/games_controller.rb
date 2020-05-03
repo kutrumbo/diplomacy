@@ -17,16 +17,6 @@ class GamesController < ApplicationController
     @areas = Area.all.index_by(&:id)
     @coasts = Coast.all.index_by(&:id)
     @user_games = @game.user_games.index_by(&:id)
-    previous_turn = @game.turns.find_by_number(@turn.number - 1)
-    @order_resolutions = if previous_turn
-      order_resolutions = OrderService.resolve_orders(previous_turn)
-      order_resolutions.reduce([]) do |result, (resolution, orders)|
-        orders.each do |order|
-          result << [order, resolution]
-        end
-        result
-      end.group_by { |pair| pair.first.user_game }
-    end
   end
 
   def map

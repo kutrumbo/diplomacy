@@ -6,6 +6,9 @@ Rails.application.routes.draw do
   resources :users, only: [:new, :create]
   resources :games, only: [:index, :show] do
     put 'orders', to: 'orders#update'
+    resources :turns, only: [] do
+      get 'orders', to: 'orders#resolutions'
+    end
   end
   get 'map', to: 'games#map'
 
