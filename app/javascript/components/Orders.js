@@ -207,7 +207,7 @@ export default function Orders(props) {
               <button
                 className={`button is-primary${loading ? ' is-loading' : ''}`}
                 onClick={submitOrders}>
-                Submit
+                Save
               </button>
             </td>
           </tr>
