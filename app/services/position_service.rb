@@ -104,7 +104,7 @@ module PositionService
       end
     when :dislodged
       next_position.update!(dislodged: true)
-    when :cancelled, :invalid, :bounced, :broken
+    when :cancelled, :invalid, :bounced, :broken, :cut
       next_position.save!
     when :failed
       # Retreat failed so don't save new position
