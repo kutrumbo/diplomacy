@@ -14,13 +14,14 @@ class Area < ApplicationRecord
 
   scope :land, -> { where(type: 'land') }
   scope :sea, -> { where(type: 'sea') }
-  scope :coastal, -> { land.includes(:neighboring_areas).where(borders: { coastal: true }, neighboring_areas_areas: { type: 'sea' }) }
-  scope :army_accessible, -> { land }
-  scope :fleet_accessible, -> { includes(:neighboring_areas).sea.or(coastal).distinct.includes(:coasts) }
+  scope :coastal, -> { land.include_neighbors.where(borders: { coastal: true }, neighboring_areas_areas: { type: 'sea' }) }
+  scope :army_accessible, -> { land.include_neighbors }
+  scope :fleet_accessible, -> { include_neighbors.sea.or(coastal).distinct.includes(:coasts) }
   scope :supply_center, -> { where(supply_center: true) }
   scope :starting_army, -> { where(unit: 'army') }
   scope :starting_fleet, -> { where(unit: 'fleet') }
   scope :starting_power, -> (power) { where(power: power) }
+  scope :include_neighbors, -> { includes(:neighboring_areas, :neighboring_coasts) }
 
   def coasts?
     self.coasts.present?
