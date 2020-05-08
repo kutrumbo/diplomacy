@@ -153,7 +153,7 @@ module OrderService
   end
 
   def self.resolve_orders(turn)
-    turn.orders.group_by do |o|
+    turn.orders.includes_all.group_by do |o|
       OrderService.resolve(o).first
     end
   end
