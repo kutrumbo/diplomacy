@@ -1,9 +1,8 @@
 module PositionService
-  def self.process_orders(order_resolutions, current_turn, upcoming_turn)
-    order_resolutions.each do |resolution, orders|
-      orders.each do |order|
-        process_order(order, resolution, upcoming_turn)
-      end
+  def self.process_resolutions(current_turn, upcoming_turn)
+    current_turn.orders.each do |order|
+      raise 'Order is not resolved' if order.resolution.nil?
+      process_resolution(order.resolution, upcoming_turn)
     end
 
     new_positions = upcoming_turn.positions.includes_areas
@@ -81,13 +80,14 @@ module PositionService
   end
 
   # create a new position based on the order resolution
-  def self.process_order(order, resolution, upcoming_turn)
+  def self.process_resolution(resolution, upcoming_turn)
+    order = resolution.order
     next_position = order.position.dup
     next_position.type = order.position.type
     next_position.turn = upcoming_turn
 
-    case resolution
-    when :resolved
+    case resolution.status
+    when 'resolved'
       if order.move? || order.retreat?
         areas_previous_power = order.turn.positions.find { |p| order.to == p.area }&.power
         next_position.update!(area: order.to, coast: order.to_coast, power: areas_previous_power, dislodged: false)
@@ -102,13 +102,14 @@ module PositionService
       else
         raise "Not implemented: resolved order of type: #{order.type}"
       end
-    when :dislodged
+    when 'dislodged'
       next_position.update!(dislodged: true)
-    when :cancelled, :invalid, :bounced, :broken, :cut
+    when 'cancelled', 'invalid', 'bounced', 'broken', 'cut'
       next_position.save!
-    when :failed
+    when 'failed'
       # Retreat failed so don't save new position
     else
+      byebug
       raise 'Unsupported resolution'
     end
   end

@@ -4,6 +4,7 @@ class Turn < ApplicationRecord
 
   belongs_to :game
   has_many :orders, dependent: :destroy
+  has_many :resolutions, through: :orders
   has_many :positions, dependent: :destroy
   has_many :user_games, through: :game
 

@@ -12,15 +12,11 @@ class OrdersController < ApplicationController
   def resolutions
     turn = current_user.games.find(params[:game_id]).turns.find(params[:turn_id])
 
-    order_resolutions = OrderService.resolve_orders(turn)
-    reorged_resolutions = order_resolutions.reduce([]) do |result, (resolution, orders)|
-      orders.each do |order|
-        # TODO: position look-up is an N+1 that we could avoid with a pre-fetch
-        result << [order, resolution, order.position]
-      end
-      result
+    resolutions = turn.orders.map(&:resolution)
+    resolutions_with_positions = resolutions.map do |resolution|
+      [resolution.order, resolution.status, resolution.order.position]
     end
-    render json: reorged_resolutions
+    render json: resolutions_with_positions
   end
 
   private

@@ -5,6 +5,7 @@ class Order < ApplicationRecord
   belongs_to :user_game
   has_one :game, through: :user_game
   has_one :user, through: :user_game
+  has_one :resolution, dependent: :destroy
   belongs_to :turn
   belongs_to :position
   belongs_to :from, class_name: 'Area', optional: true
@@ -29,5 +30,9 @@ class Order < ApplicationRecord
     define_method("#{order_type}?") do
       self.type == order_type
     end
+  end
+
+  def info_string
+    [self.power, self.position.area.name, self.type, self.from&.name, self.to&.name ].join(' ')
   end
 end

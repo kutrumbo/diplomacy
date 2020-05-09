@@ -14,7 +14,7 @@ class GamesController < ApplicationController
     @positions_by_area = @turn.positions.includes(:area).group_by(&:area)
     @orders = @user_game.orders.where(turn: @turn).index_by(&:id)
     @valid_orders = OrderService.valid_orders(@user_game, @turn)
-    @areas = Area.all.index_by(&:id)
+    @areas = AreaService.area_map
     @coasts = Coast.all.index_by(&:id)
     @user_games = @game.user_games.index_by(&:id)
   end

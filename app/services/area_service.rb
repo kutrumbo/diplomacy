@@ -1,4 +1,25 @@
 module AreaService
+  def self.area_map
+    @@area_map ||= Area.all.index_by(&:id)
+    @@area_map
+  end
+
+  def self.neighboring_areas_map
+    @@neighboring_areas_map ||= Area.all.includes(:neighboring_areas).reduce({}) do |map, area|
+      map[area] = area.neighboring_areas.to_a
+      map
+    end
+    @@neighboring_areas_map
+  end
+
+  def self.neighboring_coasts_map
+    @@neighboring_coasts_map ||= Area.all.includes(:neighboring_coasts).reduce({}) do |map, area|
+      map[area] = area.neighboring_coasts.to_a
+      map
+    end
+    @@neighboring_coasts_map
+  end
+
   def self.seed_areas
     # Create Areas
     ankara = Area.create!(name: 'Ankara', type: 'land', supply_center: true, power: 'turkey', unit: 'fleet')
