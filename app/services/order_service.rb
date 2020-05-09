@@ -153,7 +153,7 @@ module OrderService
   end
 
   def self.resolve_orders(turn)
-    turn.orders.includes_all.group_by do |o|
+    turn.orders.group_by do |o|
       OrderService.resolve(o).first
     end
   end
@@ -161,17 +161,17 @@ module OrderService
   def self.resolve(order)
     case order.type
     when 'move'
-      resolve_move(order, order.turn.orders.includes_all)
+      resolve_move(order, order.turn.orders)
     when 'hold'
-      resolve_hold(order, order.turn.orders.includes_all)
+      resolve_hold(order, order.turn.orders)
     when 'support'
-      resolve_support(order, order.turn.orders.includes_all)
+      resolve_support(order, order.turn.orders)
     when 'convoy'
-      resolve_convoy(order, order.turn.orders.includes_all)
+      resolve_convoy(order, order.turn.orders)
     when 'build_army', 'build_fleet', 'no_build', 'disband', 'keep'
       [:resolved]
     when 'retreat'
-      resolve_retreat(order, order.turn.orders.includes_all)
+      resolve_retreat(order, order.turn.orders)
     else
       raise 'Invalid order type'
     end

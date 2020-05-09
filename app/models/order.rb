@@ -22,7 +22,6 @@ class Order < ApplicationRecord
   scope :from_area, -> (from) { where(from: from) }
   scope :to_area, -> (to) { where(to: to) }
   scope :turn, -> (turn) { where(turn: turn) }
-  scope :includes_all, -> { includes(:to, :from, :to_coast, :from_coast, position: [:area, :neighboring_areas, :neighboring_coasts]) }
 
   after_update { |order| TurnService.process_turn(order.turn) }
 
