@@ -6,7 +6,7 @@ module TurnService
     if turn_complete?(turn)
       OrderResolutionService.new(turn).resolve_orders
 
-      next_turn = create_next_turn(turn)
+      next_turn = create_next_turn(turn.reload)
       PositionService.process_resolutions(
         turn,
         next_turn,

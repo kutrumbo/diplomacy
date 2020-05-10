@@ -98,7 +98,7 @@ module PositionService
       elsif order.support? || order.convoy? || order.hold? || order.keep?
         next_position.save!
       elsif order.disband? || order.no_build?
-        # do nothing
+        next_position.update!(type: nil)
       else
         raise "Not implemented: resolved order of type: #{order.type}"
       end
