@@ -270,4 +270,25 @@ class OrderResolutionServiceTest < ActiveSupport::TestCase
     assert_equal([:broken, move2], OrderResolutionService.new(turn).resolve(move2))
     assert_equal([:bounced], OrderResolutionService.new(turn).resolve(move3))
   end
+
+  test "resolve_support_supporting_unit" do
+    turn = create(:turn)
+    turkey = create(:user_game, power: 'turkey')
+    austria = create(:user_game, power: 'austria')
+    greece = Area.find_by_name('Greece')
+    bulgaria = Area.find_by_name('Bulgaria')
+    constantinople = Area.find_by_name('Constantinople')
+
+    greece_position = create(:position, area: greece, type: 'army', turn: turn, user_game: austria)
+    bulgaria_position = create(:position, area: bulgaria, type: 'army', turn: turn, user_game: turkey)
+    constantinople_position = create(:position, area: constantinople, type: 'army', turn: turn, user_game: turkey)
+
+    move = create(:order, type: 'move', from: greece, to: bulgaria, position: greece_position, turn: turn, user_game: austria)
+    support1 = create(:order, type: 'support', from: constantinople, to: constantinople, position: bulgaria_position, turn: turn, user_game: turkey)
+    support2 = create(:order, type: 'support', from: bulgaria, to: bulgaria, position: constantinople_position, turn: turn, user_game: turkey)
+
+    assert_equal([:bounced], OrderResolutionService.new(turn).resolve(move))
+    assert_equal([:cut, move], OrderResolutionService.new(turn).resolve(support1))
+    assert_equal([:resolved], OrderResolutionService.new(turn).resolve(support2))
+  end
 end

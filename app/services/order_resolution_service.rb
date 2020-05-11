@@ -118,7 +118,9 @@ class OrderResolutionService
 
   def resolve_support(order, orders)
     corresponding_order = orders.find do |o|
-      (o.move? || o.hold?) && order.from_id == o.from_id && order.to_id == o.to_id
+      valid_move_hold = (o.move? || o.hold?) && order.from_id == o.from_id && order.to_id == o.to_id
+      valid_support = o.support? && o.position.area_id == order.from_id && o.position.area_id == order.to_id
+      valid_move_hold || valid_support
     end
     return [:invalid] unless corresponding_order.present?
     attack_hash = attack_pressure_map(order_area(order), orders).reject do |o, _|
