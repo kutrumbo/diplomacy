@@ -35,9 +35,6 @@ function PositionIcon({ areas, coasts, positions, userGames, windowWidth }) {
     const unitPower = userGames[unitPosition.user_game_id].power;
     const unitClassNames = ['icon', 'icon-map', iconModifier, areaClass, unitPower, unitPosition.type];
     const areaPosition = find(positions, position => !position.type || position.dislodged);
-    if (!areaPosition) {
-      debugger;
-    }
     const areaPower = userGames[areaPosition.user_game_id].power;
     const areaClassNames = ['icon', 'icon-map', iconModifier, 'occupied-area', areaClass, areaPower];
     if (areaPosition.dislodged) {
