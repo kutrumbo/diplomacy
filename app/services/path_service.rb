@@ -60,4 +60,9 @@ module PathService
     end
     paths
   end
+
+  def self.requires_convoy?(from, to)
+    # TODO: does not handle convoying to adjacent coast
+    !AreaService.neighboring_areas_map[from].include?(to)
+  end
 end

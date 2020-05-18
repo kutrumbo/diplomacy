@@ -1,195 +1,253 @@
 class OrderResolutionService
   def initialize(turn)
-    @orders = turn.orders
-    @order_position_map = {}
-    @attack_pressure_map = {}
+    raise 'Aleady resolved' if turn.resolutions.any?
+    @turn = turn
+    @orders = @turn.orders
+    @orders_by_id = @orders.group_by(&:id) # {id: :order}
+    # {order: :position}
+    @order_position_map = turn.positions.includes(:order).reduce({}) do |map, position|
+      map[position.order] = position
+      map
+    end
+    # {order: :resolution}
+    @order_resolutions = Hash[@orders.collect { |order| [order, Resolution.new(order: order)] } ]
+    @to_map = @orders.group_by(&:to_id) # {to_id: [:orders]}
+    @move_tree = @orders.move.group_by(&:to_id)
+    @corresponding_map = {} # {support_order: :corresponding_order}
+    @supporting_orders = {} # {order: [:supporting_orders]}
   end
 
   def resolve_orders
-    @orders.group_by do |o|
-      raise "Order already resolved" if o.resolution.present?
-      resolution_status = resolve(o).first
-      Resolution.create!(order: o, status: resolution_status)
+    if @turn.attack?
+      initial_convoy_resolve
+      construct_incidence_matrix
+      initial_support_resolve
+      initial_move_resolve
+      dislodge_resolve
+    elsif @turn.retreat?
+      retreat_resolve
+    elsif @turn.build?
+      @turn.orders.each { |order| @order_resolutions[order].status = 'resolved' }
+    end
+
+    raise 'Not all orders resolved' if @order_resolutions.values.any? { |r| r.status.nil? }
+
+    @order_resolutions.values.map(&:save!)
+    @order_resolutions
+  end
+
+  private
+
+  def initial_convoy_resolve
+
+  end
+
+  def construct_incidence_matrix
+    @move_area_ids = @orders.move.reject do |order|
+      # do not include move orders that failed due to invalid convoy
+      @order_resolutions[order].status.present?
+    end.pluck(:to_id, :from_id).flatten.uniq.sort
+    @incidence_matrix = Array.new(@move_area_ids.size) { Array.new(@move_area_ids.size, 0) }
+    @orders.move.each do |order|
+      from_index = @move_area_ids.index(order.from_id)
+      to_index = @move_area_ids.index(order.to_id)
+      @incidence_matrix[from_index][to_index] = -1
+      @incidence_matrix[to_index][from_index] = 1
+    end
+    # print_incidence_matrix
+  end
+
+  # inspect the incident_matrix to separate out disconnected graphs to be resolved separately
+  def parse_disconnected_graphs
+    node_ids = @move_area_ids.dup
+    graphs = []
+    while node_ids.present?
+      graph = []
+      traverse_node(node_ids.first, graph, node_ids)
+      graphs << graph
+    end
+    graphs
+  end
+
+  def traverse_node(node, graph, node_ids)
+    graph.push(node_ids.delete(node))
+    node_index = @move_area_ids.index(node)
+    @incidence_matrix[node_index].each_with_index do |value, index|
+      next_node = @move_area_ids[index]
+      traverse_node(next_node, graph, node_ids) if value != 0 && node_ids.include?(next_node)
     end
   end
 
-  def order_position_map(order)
-    @order_position_map[order] ||= order.position
+  def initial_support_resolve
+    @orders.support.includes(position: :area).each do |order|
+      # TODO: move shouldn't count if it is not convoyed properly
+      @corresponding_map[order] = @orders.includes(:position).without(order).find do |o|
+        (o.move? && o.from_id == order.from_id && o.to_id == order.to_id) ||
+          (!o.move? && order.from_id == order.to_id && order.to_id == o.position.area_id)
+      end
+
+      if @corresponding_map[order].nil?
+        @order_resolutions[order].status = 'invalid'
+        next
+      else
+      end
+
+      cut = @to_map[order.position.area_id]&.any? do |o|
+        o.move? && o.user_game_id != order.user_game_id && o.from_id != order.to_id
+      end
+      if order.to.name == 'Munich'
+        byebug
+      end
+      @order_resolutions[order].status = cut ? 'cut' : 'resolved'
+      (@supporting_orders[@corresponding_map[order]] ||= []).push(order) if @order_resolutions[order].resolved?
+    end
   end
 
-  def attack_pressure_map(area, orders)
-    orders_pressure = @attack_pressure_map[area] ||= {}
-    order_ids = orders.map(&:id).sort
-    if orders_pressure[order_ids].nil?
-      orders_pressure[order_ids] = attacking_pressure(area, orders)
+  def initial_move_resolve
+    valid_move_orders = @orders.move.reject { |o| @order_resolutions[o].status.present? }
+    parse_disconnected_graphs.each do |graph|
+      sink_id = graph.find do |area_id|
+        index = @move_area_ids.index(area_id)
+        # if no nodes are positive, that index corresponds to a sink
+        @incidence_matrix[index].count(-1) == 0
+      end
+      if sink_id.present?
+        sink_orders = valid_move_orders.select { |o| o.to_id == sink_id }
+        resolve_tree_graph(sink_orders)
+      else
+        loop_orders = valid_move_orders.select { |o| graph.include?(o.from_id) || graph.include?(o.to_id) }
+        resolve_loop_graph(loop_orders)
+      end
     end
-    orders_pressure[order_ids]
+  end
+
+  # if moves are in a loop, check for a bounce in the loop to use as the sink to force proper bounce backs
+  def resolve_loop_graph(orders)
+    bounce = orders.find do |order|
+      resolve_move(order, true)
+    end
+    if bounce.nil?
+      # mark all moves as resolved
+      orders.each do |order|
+        @order_resolutions[order].status = 'resolved'
+      end
+    else
+      resolve_tree_graph([bounce])
+    end
+  end
+
+  # if moves are in a tree, start at the sink and work iteratively through children
+  def resolve_tree_graph(sink_orders)
+    orders = sink_orders
+    while orders.present?
+      orders.each { |order| resolve_move(order) }
+      orders = orders.map do |order|
+        @move_tree[order.from_id]
+      end.flatten.compact.uniq.reject do |order|
+        @order_resolutions[order]&.status.present?
+      end
+    end
+  end
+
+  def resolve_move(order, check_bounce=false)
+    # quick return if already resolved (for instance due to invalid convoy)
+    return if @order_resolutions[order].status.present?
+    support_map = calculate_support_map(order.to_id, check_bounce)
+
+    support_strengths = support_map.values.map(&:size)
+    max_strength = support_strengths.max
+    move_strength = support_map[order].size
+    bounce = support_strengths.count { |i| i == max_strength } > 1
+
+    return bounce if check_bounce
+
+    @order_resolutions[order].status = if move_strength == max_strength && !bounce
+      origin_order = support_map.keys.find do |o|
+        @order_position_map[o].area_id == order.to_id
+      end
+      if origin_order&.user_game_id == order.user_game_id
+        # cannot dislodged own units
+        'bounced'
+      else
+        'resolved'
+      end
+    else
+      'bounced'
+    end
+  end
+
+  def dislodge_resolve
+    @orders.includes(position: :area).each do |order|
+      next if order.move? && @order_resolutions[order].resolved?
+
+      dislodged = @to_map[order.position.area_id]&.any? do |o|
+        o.move? && @order_resolutions[o].resolved?
+      end
+      if dislodged
+        @order_resolutions[order].status = 'dislodged'
+      else
+        @order_resolutions[order].status = 'resolved' if order.hold?
+      end
+    end
   end
 
   def order_area(order)
     AreaService.area_map[order_position_map(order).area_id]
   end
 
-  def resolve(order)
-    case order.type
-    when 'move'
-      resolve_move(order, @orders)
-    when 'hold'
-      resolve_hold(order, @orders)
-    when 'support'
-      resolve_support(order, @orders)
-    when 'convoy'
-      resolve_convoy(order, @orders)
-    when 'build_army', 'build_fleet', 'no_build', 'disband', 'keep'
-      [:resolved]
-    when 'retreat'
-      resolve_retreat(order, @orders)
-    else
-      raise 'Invalid order type'
+  def supporting_orders(order)
+    @supporting_orders[order] || []
+  end
+
+  def calculate_support_map(area_id, check_bounce=false)
+    support_map = {}
+    # TODO: N+1
+    origin_order = @orders.joins(:position).where(positions: { area_id: area_id }).first
+    if origin_order.present? && !(origin_order.move? && (@order_resolutions[origin_order].resolved? || check_bounce))
+      # resolved moves do not count towards area defense
+      support_map[origin_order] = origin_order.move? ? [] : supporting_orders(origin_order)
+    end
+    # TODO: N+1
+    @orders.where(type: 'move', to_id: area_id).each do |order|
+      support_map[order] = supporting_orders(order)
+    end
+    support_map
+  end
+
+  def print_incidence_matrix
+    puts '*******************************************************'
+    puts ''
+    puts @move_area_ids.map { |aid| Area.find(aid).name }.join(' ')
+    puts ''
+    @incidence_matrix.each do |row|
+      puts row.join(' ')
+    end
+    puts ''
+    puts '*******************************************************'
+  end
+
+  def retreat_resolve
+    conflicting_retreats = @turn.orders.retreat.group_by(&:to_id).select do |_, orders|
+      orders.size > 1
+    end.values.flatten
+    @order_resolutions.each do |order, resolution|
+      resolution.status = conflicting_retreats.include?(order) ? 'failed' : 'resolved'
     end
   end
 
-  def resolve_retreat(order, orders)
-    if conflicting_order = orders.without(order).find { |o| o.to_id == order.to_id }
-      [:failed, conflicting_order]
-    else
-      [:resolved]
-    end
-  end
-
-  def resolve_move(order, orders)
-    if requires_convoy?(AreaService.area_map[order.from_id], AreaService.area_map[order.to_id])
-      convoying_orders = orders.select do |o|
-        o.convoy? && o.from_id == order.from_id && o.to_id == order.to_id
-      end
-      return [:invalid] if convoying_orders.empty?
-
-      # TODO: need to support multiple convoy routes
-      convoys_disrupted = convoying_orders.any? do |o|
-        resolve_hold(o, orders) != [:resolved]
-      end
-      return [:cancelled] if convoys_disrupted
-    end
-
-    attack_hash = attack_pressure_map(AreaService.area_map[order.to_id], orders)
-    attack_succeeds = attack_hash.key?(order) && attack_hash[order].size + 1 > hold_support(AreaService.area_map[order.to_id], orders).size
-    unless attack_succeeds && attack_hash.keys == [order]
-      # if attack fails or if one of multiple successful attacks, determine if it holds its area
-      hold_resolution = resolve_hold(order, orders)
-      return [:bounced] if hold_resolution == [:resolved]
-      if hold_resolution == [:broken]
-        return attack_hash.size == 1 ? [:broken, attack_hash.keys.first] : [:bounced]
-      end
-      return hold_resolution
-    end
-
-    # bounce if target area contains a unit moving to the current location
-    if orders.any? { |o| o.move? && o.to_id == order.from_id && o.from_id == order.to_id }
-      return [:bounced]
-    end
-
-    # do not allow a power to dislodge its own unit
-    if orders.any? { |o| !o.move? && order_position_map(o).area_id == order.to_id && o.power == order.power }
-      return [:bounced]
-    end
-    [:resolved]
-  end
-
-  def resolve_hold(order, orders)
-    attack_hash = attack_pressure_map(order_area(order), orders)
-    return [:resolved] if attack_hash.empty?
-    attack_strength = attack_hash.values.first.size + 1
-    hold_strength = hold_support(order_area(order), orders).size
-    if attack_strength > hold_strength
-      # if multiple attackers, attacks bounce and position holds
-      if attack_hash.size == 1
-        if attack_hash.keys.first.power == order.power
-          # do not allow self-dislodgement
-          return [:resolved]
-        else
-          return [:dislodged, attack_hash.keys.first]
-        end
-      end
-    end
-    # TODO: convoy attack can not cut support to a fleet supporting another convoying fleet
-    return [:resolved] if order.hold?
-    order.move? ? [:broken] : [:cut, attack_hash.keys.first]
-  end
-
-  def resolve_support(order, orders)
-    corresponding_order = orders.find do |o|
-      valid_move_hold = (o.move? || o.hold?) && order.from_id == o.from_id && order.to_id == o.to_id
-      valid_support = (o.support? || o.convoy?) && o.position.area_id == order.from_id && o.position.area_id == order.to_id
-      valid_move_hold || valid_support
-    end
-    return [:invalid] unless corresponding_order.present?
-    attack_hash = attack_pressure_map(order_area(order), orders).reject do |o, _|
-      # exclude any attacks from the target area to the current support
-      o.move? && o.from_id == order.to_id && o.to_id == order_area(order).id
-    end
-    attack_hash.present? ? resolve_hold(order, orders) : [:resolved]
-  end
-
-  def resolve_convoy(order, orders)
-    unless orders.any? { |o| o.move? && o.from_id == order.from_id && o.to_id == order.to_id }
-      return [:invalid]
-    end
-
-    supporting_convoys = orders.without(order).select do |o|
-      o.convoy? && o.from_id == order.from_id && o.to_id == order.to_id
-    end
-    convoys_disrupted = supporting_convoys.any? do |o|
-      resolve_hold(o, orders) != [:resolved]
-    end
-    return [:cancelled] if convoys_disrupted
-
-    resolve_hold(order, orders)
-  end
-
-  private
-
-  def requires_convoy?(from, to)
-    # TODO: does not handle convoying to adjacent coast
-    !AreaService.neighboring_areas_map[from].include?(to)
-  end
-
-  def hold_support(area, orders)
-    orders.select do |o|
-      non_moving_position_at_area = order_position_map(o).area_id == area.id && !o.move?
-      support_hold_order = o.support? && o.from_id == area.id && o.to_id == area.id && orders.any? do |i|
-        # verify there is a non-moving unit at the area to support
-        !i.move? && i.position.area_id == area.id
-      end
-      failed_move_order_at_area = if order_position_map(o).area_id == area.id && o.move?
-        attack_hash = attack_pressure_map(AreaService.area_map[o.to_id], orders)
-        attack_succeeds = attack_hash.key?(o) && attack_hash[o].size + 1 > hold_support(AreaService.area_map[o.to_id], orders.without(o)).size
-        !attack_succeeds || attack_hash.keys != [o]
-      end
-
-      non_moving_position_at_area || support_hold_order || failed_move_order_at_area
-    end
-  end
-
-  # returns hash of { attack_order: [supporting_orders] } excluding the less supported attacks
-  def attacking_pressure(area, orders)
-    orders.select do |o|
-      o.move? && o.to_id == area.id
-    end.reduce({}) do |attack_hash, o|
-      support = attack_support(o, orders.without(o))
-      prev_support_level = (attack_hash.values.first || []).size
-      return Hash[o, support] if support.size > prev_support_level
-      attack_hash[o] = support if support.size == prev_support_level
-      attack_hash
-    end
-  end
-
-  def attack_support(order, orders)
-    orders.select do |o|
-      order_supports_attack = o.support? && o.from_id == order.from_id && o.to_id == order.to_id
-      order_not_cut = attack_pressure_map(order_area(o), orders).all? do |attack_order, _|
-        attack_order.from_id == order.to_id
-      end
-      order_supports_attack && order_not_cut
-    end
-  end
+  # def resolve_convoy(order, orders)
+  #   unless orders.any? { |o| o.move? && o.from_id == order.from_id && o.to_id == order.to_id }
+  #     return [:invalid]
+  #   end
+  #
+  #   supporting_convoys = orders.without(order).select do |o|
+  #     o.convoy? && o.from_id == order.from_id && o.to_id == order.to_id
+  #   end
+  #   convoys_disrupted = supporting_convoys.any? do |o|
+  #     resolve_hold(o, orders) != [:resolved]
+  #   end
+  #   return [:cancelled] if convoys_disrupted
+  #
+  #   resolve_hold(order, orders)
+  # end
 end

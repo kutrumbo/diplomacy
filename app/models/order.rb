@@ -20,6 +20,7 @@ class Order < ApplicationRecord
   scope :convoy, -> { where(type: 'convoy') }
   scope :move, -> { where(type: 'move') }
   scope :support, -> { where(type: 'support') }
+  scope :retreat, -> { where(type: 'retreat') }
   scope :from_area, -> (from) { where(from: from) }
   scope :to_area, -> (to) { where(to: to) }
   scope :turn, -> (turn) { where(turn: turn) }

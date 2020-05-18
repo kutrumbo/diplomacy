@@ -4,4 +4,10 @@ class Resolution < ApplicationRecord
   belongs_to :order
 
   validates_inclusion_of :status, in: STATUS_TYPES
+
+  STATUS_TYPES.each do |resolution_status|
+    define_method("#{resolution_status}?") do
+      self.status == resolution_status
+    end
+  end
 end

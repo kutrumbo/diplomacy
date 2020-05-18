@@ -8,6 +8,7 @@ class Position < ApplicationRecord
   belongs_to :turn
   has_one :user, through: :user_game
   has_one :game, through: :user_game
+  has_one :order
   has_many :neighboring_areas, through: :area
   has_many :neighboring_coasts, through: :area
 
