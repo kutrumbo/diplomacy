@@ -95,9 +95,6 @@ class OrderResolutionService
       cut = @to_map[order.position.area_id]&.any? do |o|
         o.move? && o.user_game_id != order.user_game_id && o.from_id != order.to_id
       end
-      if order.to.name == 'Munich'
-        byebug
-      end
       @order_resolutions[order].status = cut ? 'cut' : 'resolved'
       (@supporting_orders[@corresponding_map[order]] ||= []).push(order) if @order_resolutions[order].resolved?
     end
