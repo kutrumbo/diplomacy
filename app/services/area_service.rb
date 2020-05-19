@@ -479,6 +479,7 @@ module AreaService
     Border.create!(area: mid_atlantic_ocean, neighbor: north_atlantic_ocean)
     Border.create!(area: mid_atlantic_ocean, neighbor: irish_sea)
     Border.create!(area: mid_atlantic_ocean, neighbor: english_channel)
+    Border.create!(area: mid_atlantic_ocean, neighbor: western_mediterranean)
     Border.create!(area: mid_atlantic_ocean, neighbor: brest, coastal: true)
     Border.create!(area: mid_atlantic_ocean, neighbor: gascony, coastal: true)
     Border.create!(area: mid_atlantic_ocean, neighbor: spain_nc, coastal: true)
