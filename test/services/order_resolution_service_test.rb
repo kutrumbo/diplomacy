@@ -7,13 +7,17 @@ class OrderResolutionServiceTest < ActiveSupport::TestCase
     @retreat_turn = create(:turn, type: 'spring_retreat')
     @england = create(:user_game, power: 'england')
     @france = create(:user_game, power: 'france')
+    @aegean_sea = Area.find_by_name('Aegean Sea')
     @albania = Area.find_by_name('Albania')
     @budapest = Area.find_by_name('Budapest')
     @bulgaria = Area.find_by_name('Bulgaria')
     @constantinople = Area.find_by_name('Constantinople')
+    @eastern_mediterranean = Area.find_by_name('Eastern Mediterranean')
     @greece = Area.find_by_name('Greece')
+    @ionian_sea = Area.find_by_name('Ionian Sea')
     @rumania = Area.find_by_name('Rumania')
     @serbia = Area.find_by_name('Serbia')
+    @smyrna = Area.find_by_name('Smyrna')
   end
 
   def create_position(area, type, user_game=nil, turn=nil)
@@ -202,77 +206,35 @@ class OrderResolutionServiceTest < ActiveSupport::TestCase
     assert_equal('resolved', resolutions[o3].status)
   end
 
-  #
-  # test "resolve-convoy" do
-  #   turn = create(:turn)
-  #   tunis = Area.find_by_name('Tunis')
-  #   ionian_sea = Area.find_by_name('Ionian Sea')
-  #   aegean_sea = Area.find_by_name('Aegean Sea')
-  #   smyrna = Area.find_by_name('Smyrna')
-  #
-  #   tunis_position = create(:position, area: tunis, type: 'army', turn: turn)
-  #   ionian_sea_position = create(:position, area: ionian_sea, type: 'fleet', turn: turn)
-  #   aegean_sea_position = create(:position, area: aegean_sea, type: 'fleet', turn: turn)
-  #
-  #   move = create(:order, type: 'move', from: tunis, to: smyrna, position: tunis_position, turn: turn)
-  #   convoy1 = create(:order, type: 'convoy', from: tunis, to: smyrna, position: ionian_sea_position, turn: turn)
-  #   convoy2 = create(:order, type: 'convoy', from: tunis, to: smyrna, position: aegean_sea_position, turn: turn)
-  #
-  #   assert_equal([:resolved], OrderResolutionService.new(turn).resolve(move))
-  #   assert_equal([:resolved], OrderResolutionService.new(turn).resolve(convoy1))
-  #   assert_equal([:resolved], OrderResolutionService.new(turn).resolve(convoy2))
-  # end
-  #
-  # test "resolve-convoy_bounce" do
-  #   turn = create(:turn)
-  #   tunis = Area.find_by_name('Tunis')
-  #   ionian_sea = Area.find_by_name('Ionian Sea')
-  #   aegean_sea = Area.find_by_name('Aegean Sea')
-  #   smyrna = Area.find_by_name('Smyrna')
-  #
-  #   tunis_position = create(:position, area: tunis, type: 'army', turn: turn)
-  #   ionian_sea_position = create(:position, area: ionian_sea, type: 'fleet', turn: turn)
-  #   aegean_sea_position = create(:position, area: aegean_sea, type: 'fleet', turn: turn)
-  #   smyrna_position = create(:position, area: smyrna, type: 'fleet', turn: turn)
-  #
-  #   move = create(:order, type: 'move', from: tunis, to: smyrna, position: tunis_position, turn: turn)
-  #   convoy1 = create(:order, type: 'convoy', from: tunis, to: smyrna, position: ionian_sea_position, turn: turn)
-  #   convoy2 = create(:order, type: 'convoy', from: tunis, to: smyrna, position: aegean_sea_position, turn: turn)
-  #   hold = create(:order, type: 'hold', from: smyrna, to: smyrna, position: smyrna_position, turn: turn)
-  #
-  #   assert_equal([:bounced], OrderResolutionService.new(turn).resolve(move))
-  #   assert_equal([:resolved], OrderResolutionService.new(turn).resolve(convoy1))
-  #   assert_equal([:resolved], OrderResolutionService.new(turn).resolve(convoy2))
-  #   assert_equal([:resolved], OrderResolutionService.new(turn).resolve(hold))
-  # end
-  #
-  # test "resolve-convoy_disrupted" do
-  #   turn = create(:turn)
-  #   england = create(:user_game, power: 'england')
-  #   germany = create(:user_game, power: 'germany')
-  #   tunis = Area.find_by_name('Tunis')
-  #   ionian_sea = Area.find_by_name('Ionian Sea')
-  #   aegean_sea = Area.find_by_name('Aegean Sea')
-  #   smyrna = Area.find_by_name('Smyrna')
-  #   adriatic_sea = Area.find_by_name('Adriatic Sea')
-  #   tyrrhenian_sea = Area.find_by_name('Tyrrhenian Sea')
-  #
-  #   tunis_position = create(:position, area: tunis, type: 'army', user_game: england, turn: turn)
-  #   ionian_sea_position = create(:position, area: ionian_sea, type: 'fleet', user_game: england, turn: turn)
-  #   aegean_sea_position = create(:position, area: aegean_sea, type: 'fleet', user_game: england, turn: turn)
-  #   adriatic_sea_position = create(:position, area: adriatic_sea, type: 'fleet', user_game: germany, turn: turn)
-  #   tyrrhenian_sea_position = create(:position, area: tyrrhenian_sea, type: 'fleet', user_game: germany, turn: turn)
-  #
-  #   move = create(:order, type: 'move', from: tunis, to: smyrna, position: tunis_position, user_game: england, turn: turn)
-  #   convoy1 = create(:order, type: 'convoy', from: tunis, to: smyrna, position: ionian_sea_position, user_game: england, turn: turn)
-  #   convoy2 = create(:order, type: 'convoy', from: tunis, to: smyrna, position: aegean_sea_position, user_game: england, turn: turn)
-  #   attack_convoy = create(:order, type: 'move', from: adriatic_sea, to: ionian_sea, position: adriatic_sea_position, user_game: germany, turn: turn)
-  #   support_attack = create(:order, type: 'support', from: adriatic_sea, to: ionian_sea, position: tyrrhenian_sea_position, user_game: germany, turn: turn)
-  #
-  #   assert_equal([:cancelled], OrderResolutionService.new(turn).resolve(move))
-  #   assert_equal([:dislodged, attack_convoy], OrderResolutionService.new(turn).resolve(convoy1))
-  #   assert_equal([:cancelled], OrderResolutionService.new(turn).resolve(convoy2))
-  #   assert_equal([:resolved], OrderResolutionService.new(turn).resolve(attack_convoy))
-  #   assert_equal([:resolved], OrderResolutionService.new(turn).resolve(support_attack))
-  # end
+  test "simple convoy" do
+    greece_position = create_position(@greece, 'army')
+    aegean_sea_position = create_position(@aegean_sea, 'fleet')
+
+    o1 = create_move(greece_position, @smyrna)
+    o2 = create_convoy(aegean_sea_position, @greece, @smyrna)
+
+    resolutions = OrderResolutionService.new(@attack_turn).resolve_orders
+
+    assert_equal('resolved', resolutions[o1].status)
+    assert_equal('resolved', resolutions[o2].status)
+  end
+
+  test "disrupted convoy" do
+    aegean_sea_position = create_position(@aegean_sea, 'fleet', @england)
+    eastern_mediterranean_position = create_position(@eastern_mediterranean, 'fleet', @france)
+    greece_position = create_position(@greece, 'army', @england)
+    ionian_sea_position = create_position(@ionian_sea, 'fleet', @france)
+
+    o1 = create_move(greece_position, @smyrna)
+    o2 = create_convoy(aegean_sea_position, @greece, @smyrna)
+    o3 = create_move(eastern_mediterranean_position, @aegean_sea)
+    o4 = create_support(ionian_sea_position, @eastern_mediterranean, @aegean_sea)
+
+    resolutions = OrderResolutionService.new(@attack_turn).resolve_orders
+
+    assert_equal('failed', resolutions[o1].status)
+    assert_equal('dislodged', resolutions[o2].status)
+    assert_equal('resolved', resolutions[o3].status)
+    assert_equal('resolved', resolutions[o4].status)
+  end
 end

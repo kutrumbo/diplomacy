@@ -13,8 +13,9 @@ class OrderResolutionService
     @order_resolutions = Hash[@orders.collect { |order| [order, Resolution.new(order: order)] } ]
     @to_map = @orders.group_by(&:to_id) # {to_id: [:orders]}
     @move_tree = @orders.move.group_by(&:to_id)
-    @corresponding_map = {} # {support_order: :corresponding_order}
+    @corresponding_map = {} # {support_or_convoy_order: :corresponding_order}
     @supporting_orders = {} # {order: [:supporting_orders]}
+    @convoying_orders = {} # {order: [:convoying_orders]}
   end
 
   def resolve_orders
@@ -39,7 +40,29 @@ class OrderResolutionService
   private
 
   def initial_convoy_resolve
+    convoy_moves = @orders.move.select do |o|
+      PathService.requires_convoy?(AreaService.area_map[o.from_id], AreaService.area_map[o.to_id])
+    end
 
+    convoy_orders = @orders.convoy.to_a
+    convoy_moves.each do |order|
+      corresponding_convoy_orders = convoy_orders.select do |o|
+        o.from_id == order.from_id && o.to_id == order.to_id
+      end
+      if corresponding_convoy_orders.empty?
+        @order_resolutions[order].status = 'invalid'
+      else
+        corresponding_convoy_orders.each do |o|
+          @corresponding_map[o] = order
+          @order_resolutions[o].status = 'resolved'
+        end
+        @convoying_orders[order] = corresponding_convoy_orders
+        convoy_orders -= corresponding_convoy_orders
+      end
+    end
+    convoy_orders.each do |order|
+      @order_resolutions[order].status = 'invalid'
+    end
   end
 
   def construct_incidence_matrix
@@ -102,7 +125,8 @@ class OrderResolutionService
 
   def initial_move_resolve
     valid_move_orders = @orders.move.reject { |o| @order_resolutions[o].status.present? }
-    parse_disconnected_graphs.each do |graph|
+    # TODO: need to order graphs by convoy dependencies
+    parse_disconnected_graphs.reverse.each do |graph|
       sink_id = graph.find do |area_id|
         index = @move_area_ids.index(area_id)
         # if no nodes are positive, that index corresponds to a sink
@@ -149,6 +173,21 @@ class OrderResolutionService
   def resolve_move(order, check_bounce=false)
     # quick return if already resolved (for instance due to invalid convoy)
     return if @order_resolutions[order].status.present?
+    # if convoy order, fail if convoying fleet is dislodged
+    if @convoying_orders[order].present?
+      # TODO: handle multiple convoys
+      # this depends on move orders that are attacking the convoying orders to have been resolved
+      convoy_dislodged = @convoying_orders[order].any? do |convoying_order|
+        successful_move_orders = @order_resolutions.select do |o, resolution|
+          o.move? && resolution.resolved?
+        end.keys
+        successful_move_orders.any? { |o| o.to_id == @order_position_map[convoying_order].area_id }
+      end
+      if convoy_dislodged
+        @order_resolutions[order].status = 'failed'
+        return
+      end
+    end
     support_map = calculate_support_map(order.to_id, check_bounce)
 
     support_strengths = support_map.values.map(&:size)
@@ -169,6 +208,7 @@ class OrderResolutionService
         'resolved'
       end
     else
+      # TODO: support two units swapping via convoy
       'bounced'
     end
   end
@@ -188,9 +228,6 @@ class OrderResolutionService
     end
   end
 
-  def order_area(order)
-    AreaService.area_map[order_position_map(order).area_id]
-  end
 
   def supporting_orders(order)
     @supporting_orders[order] || []
@@ -231,20 +268,4 @@ class OrderResolutionService
       resolution.status = conflicting_retreats.include?(order) ? 'failed' : 'resolved'
     end
   end
-
-  # def resolve_convoy(order, orders)
-  #   unless orders.any? { |o| o.move? && o.from_id == order.from_id && o.to_id == order.to_id }
-  #     return [:invalid]
-  #   end
-  #
-  #   supporting_convoys = orders.without(order).select do |o|
-  #     o.convoy? && o.from_id == order.from_id && o.to_id == order.to_id
-  #   end
-  #   convoys_disrupted = supporting_convoys.any? do |o|
-  #     resolve_hold(o, orders) != [:resolved]
-  #   end
-  #   return [:cancelled] if convoys_disrupted
-  #
-  #   resolve_hold(order, orders)
-  # end
 end
