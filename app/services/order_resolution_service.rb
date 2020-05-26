@@ -89,7 +89,7 @@ class OrderResolutionService
       traverse_node(node_ids.first, graph, node_ids)
       graphs << graph
     end
-    graphs
+    order_graphs_via_convoy_dependency(graphs)
   end
 
   def traverse_node(node, graph, node_ids)
@@ -123,10 +123,36 @@ class OrderResolutionService
     end
   end
 
+  # sort the graphs such that graphs attacking the convoy of another graph are resolved first
+  def order_graphs_via_convoy_dependency(graphs)
+    graphs_with_convoys = graphs.map do |graph|
+      convoys = @convoying_orders.select do |move_order, _|
+        graph.include?(move_order.to_id) && graph.include?(move_order.from_id)
+      end.values.flatten
+      [graph, convoys.map { |o| @order_position_map[o].area_id }]
+    end
+    graphs_with_convoys.sort do |a, b|
+      a_attacks_b_convoys = a.first.any? { |aid| b.second.include?(aid) }
+      b_attacks_a_convoys = b.first.any? { |aid| a.second.include?(aid) }
+
+      if a_attacks_b_convoys && b_attacks_a_convoys
+        # TODO: handle paradox
+        raise 'Circular convoy paradox'
+      end
+
+      if a_attacks_b_convoys
+        -1
+      elsif b_attacks_a_convoys
+        1
+      else
+        0
+      end
+    end.map(&:first)
+  end
+
   def initial_move_resolve
     valid_move_orders = @orders.move.reject { |o| @order_resolutions[o].status.present? }
-    # TODO: need to order graphs by convoy dependencies
-    parse_disconnected_graphs.reverse.each do |graph|
+    parse_disconnected_graphs.each do |graph|
       sink_id = graph.find do |area_id|
         index = @move_area_ids.index(area_id)
         # if no nodes are positive, that index corresponds to a sink
