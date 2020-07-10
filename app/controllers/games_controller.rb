@@ -2,7 +2,7 @@ class GamesController < ApplicationController
   before_action :require_authentication
 
   def index
-    @games = current_user.games
+    @games = current_user.games.active
   end
 
   def show

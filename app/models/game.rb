@@ -4,6 +4,8 @@ class Game < ApplicationRecord
   has_many :positions, through: :user_games
   has_many :users, through: :user_games
 
+  scope :active, -> { where(finished: false) }
+
   def current_turn
     self.turns.order(:number).last
   end
