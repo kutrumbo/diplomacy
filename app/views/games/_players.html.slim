@@ -17,6 +17,19 @@ div[class="table-container"]
           td = user_game.user.name
           td = user_game.power.capitalize
           - unless card_view
-            td = user_game.positions.turn(game.current_turn).supply_center.power(user_game.power).count
-            td = user_game.positions.turn(game.current_turn).with_army.count
-            td = user_game.positions.turn(game.current_turn).with_fleet.count
+            - positions = user_game.positions.turn(game.current_turn)
+            - if game.current_turn.fall?
+              - prev_supply_centers = positions.supply_center.power(user_game.power)
+              - gained_supply_center_count = positions.supply_center.not_power(user_game.power).occupied_by(user_game).count
+              - lost_supply_center_count = prev_supply_centers.select { |position| game.current_turn.positions.with_unit.not_occupied_by(user_game).where(area: position.area).any? }.count
+              - supply_center_diff = gained_supply_center_count - lost_supply_center_count
+              - if supply_center_diff == 0
+                td = prev_supply_centers.count
+              - elsif supply_center_diff > 0
+                td = "#{prev_supply_centers.count} + #{supply_center_diff}"
+              - else
+                td = "#{prev_supply_centers.count} - #{supply_center_diff.abs}"
+            - else
+              td = positions.supply_center.power(user_game.power).count
+            td = positions.with_army.count
+            td = positions.with_fleet.count

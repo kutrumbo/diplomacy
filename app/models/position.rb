@@ -25,6 +25,9 @@ class Position < ApplicationRecord
   scope :turn, -> (turn) { where(turn: turn) }
   scope :includes_areas, -> { includes(area: [:neighboring_areas, :neighboring_coasts]) }
   scope :power, -> (power) { where(power: power) }
+  scope :not_power, -> (power) { where.not(power: power).or(Position.where(power: nil)) }
+  scope :occupied_by, -> (user_game) { where(user_game: user_game) }
+  scope :not_occupied_by, -> (user_game) { where.not(user_game: user_game) }
 
   def army?
     self.type == 'army'
