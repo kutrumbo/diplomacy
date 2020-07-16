@@ -55,7 +55,7 @@ class OrdersController < ApplicationController
       requested_builds = orders.to_h.reject { |order_id, order| order[:type] == 'no_build' }
       if requested_builds.size > builds_available
         return {
-          message: "Invalid order instructions: must request exactly #{builds_available} #{'build'.pluralize(builds_available)}",
+          message: "Invalid order instructions: cannot request more than #{builds_available} #{'build'.pluralize(builds_available)}",
           validations: orders.to_h,
         }
       end
