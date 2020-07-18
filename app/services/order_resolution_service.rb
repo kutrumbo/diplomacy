@@ -264,8 +264,8 @@ class OrderResolutionService
     # TODO: N+1
     origin_order = @orders.joins(:position).where(positions: { area_id: area_id }).first
     if origin_order.present? && !(origin_order.move? && (@order_resolutions[origin_order].resolved? || check_bounce))
-      # resolved moves do not count towards area defense
-      support_map[origin_order] = origin_order.move? ? [] : supporting_orders(origin_order)
+      # resolved moves do not count towards area defense unless attacking from the area
+      support_map[origin_order] = (origin_order.move? && origin_order.from_id != area_id) ? [] : supporting_orders(origin_order)
     end
     # TODO: N+1
     @orders.where(type: 'move', to_id: area_id).each do |order|
