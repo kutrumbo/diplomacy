@@ -11,17 +11,19 @@ module PositionService
       process_previous_position(previous_position, new_positions, upcoming_turn, current_turn)
     end
     # if it is the end of fall, claim any occupied positions
-    if current_turn.fall_retreat?
+    if current_turn.retreat?
       upcoming_turn.reload.positions.includes(:area, :user_game).group_by(&:area).each do |area, positions|
         raise 'Cannot be more than 2 positions on an area' if positions.size > 2
         positions_with_unit = positions.select(&:type)
         raise 'Can only be one position with a unit on a territory' if positions_with_unit.size > 1
         if position_with_unit = positions_with_unit.first
-          # if there is a position with a unit, it claims the area and any other positon is removed
-          if position_with_unit.power != position_with_unit.user_game.power
+          # if there is a position with a unit, other positon is removed
+          positions.reject(&:type).first&.destroy
+
+          # if fall turn, area is claimed
+          if current_turn.fall_retreat? && position_with_unit.power != position_with_unit.user_game.power
             position_with_unit.update!(power: position_with_unit.user_game.power)
           end
-          positions.reject(&:type).first&.destroy
         end
       end
     end
@@ -63,10 +65,8 @@ module PositionService
 
   # create new positions for all old positions except ones that were dislodged
   def self.process_previous_retreat_position(previous_position, new_positions, upcoming_turn)
-    new_position = previous_position.dup
-    if previous_position.dislodged?
-      new_position.update!(turn: upcoming_turn, dislodged: false, type: nil)
-    elsif !new_positions.any? { |p| p.area == previous_position.area }
+    unless previous_position.dislodged?
+      new_position = previous_position.dup
       new_position.update!(turn: upcoming_turn)
     end
   end
@@ -109,7 +109,6 @@ module PositionService
     when 'failed'
       # Retreat failed so don't save new position
     else
-      byebug
       raise 'Unsupported resolution'
     end
   end
