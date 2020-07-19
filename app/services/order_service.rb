@@ -43,7 +43,7 @@ module OrderService
         # the previous turn, or where the attacking order that dislodged the unit came from
         contains_unit = all_unit_positions.map(&:area).include?(area)
         stand_off_last_turn = (previous_turn_order_resolutions['bounced'] || []).any? do |order|
-          order.to == position.area
+          order.to == area
         end
         dislodger_source = (previous_turn_order_resolutions['resolved'] || []).find do |order|
           order.move? && order.to == position.area
