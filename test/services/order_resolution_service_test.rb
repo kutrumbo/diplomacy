@@ -256,4 +256,26 @@ class OrderResolutionServiceTest < ActiveSupport::TestCase
     assert_equal('bounced', resolutions[o3].status)
     assert_equal('resolved', resolutions[o4].status)
   end
+
+  test "head-to-head 3 v 2" do
+    albania_position = create_position(@albania, 'army', @france)
+    serbia_position = create_position(@serbia, 'army', @england)
+    bulgaria_position = create_position(@bulgaria, 'army', @france)
+    constantinople_position = create_position(@constantinople, 'army', @england)
+    greece_position = create_position(@greece, 'army', @england)
+
+    o1 = create_support(albania_position, @bulgaria, @serbia)
+    o2 = create_move(bulgaria_position, @serbia)
+    o3 = create_move(serbia_position, @bulgaria)
+    o4 = create_support(constantinople_position, @serbia, @bulgaria)
+    o5 = create_support(greece_position, @serbia, @bulgaria)
+
+    resolutions = OrderResolutionService.new(@attack_turn).resolve_orders
+
+    assert_equal('resolved', resolutions[o1].status)
+    assert_equal('dislodged', resolutions[o2].status)
+    assert_equal('resolved', resolutions[o3].status)
+    assert_equal('resolved', resolutions[o4].status)
+    assert_equal('resolved', resolutions[o5].status)
+  end
 end

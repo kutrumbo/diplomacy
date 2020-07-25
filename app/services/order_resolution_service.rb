@@ -115,7 +115,7 @@ class OrderResolutionService
       else
       end
 
-      cut = @to_map[order.position.area_id]&.any? do |o|
+      cut = @to_map[@order_position_map[order].area_id]&.any? do |o|
         o.move? && o.user_game_id != order.user_game_id && o.from_id != order.to_id
       end
       @order_resolutions[order].status = cut ? 'cut' : 'resolved'
@@ -231,7 +231,16 @@ class OrderResolutionService
         # cannot dislodged own units
         'bounced'
       else
-        'resolved'
+        # check if being attacked by destination
+        attacking_order = @to_map[@order_position_map[order].area_id]&.find do |o|
+          o.move? && o.from_id == order.to_id
+        end
+        # if attacking order is greater strength, unit is dislodged
+        if attacking_order && calculate_support_map(order.from_id, false)[attacking_order].size > move_strength
+          'disldoged'
+        else
+          'resolved'
+        end
       end
     else
       # TODO: support two units swapping via convoy
@@ -243,7 +252,7 @@ class OrderResolutionService
     @orders.includes(position: :area).each do |order|
       next if order.move? && @order_resolutions[order].resolved?
 
-      dislodged = @to_map[order.position.area_id]&.any? do |o|
+      dislodged = @to_map[@order_position_map[order].area_id]&.any? do |o|
         o.move? && @order_resolutions[o].resolved?
       end
       if dislodged
