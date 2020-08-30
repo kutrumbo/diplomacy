@@ -15,7 +15,7 @@ services:
       - gem_cache:/usr/local/bundle/gems
     env_file: .env
     environment:
-      RAILS_ENV: docker
+      RAILS_ENV: production
 
   database:
     image: postgres:12.3

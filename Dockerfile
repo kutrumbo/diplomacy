@@ -1,7 +1,7 @@
 FROM ruby:2.7.1-alpine
 
 ENV BUNDLER_VERSION=2.1.4
-ENV RAILS_ENV=docker
+ENV RAILS_ENV=production
 ENV NODE_ENV=production
 ENV RAILS_SERVE_STATIC_FILES true
 ENV RAILS_LOG_TO_STDOUT true
@@ -29,8 +29,7 @@ RUN apk add --update --no-cache \
       postgresql-dev \
       python3 \
       tzdata \
-      yarn \
-      && rm -rf /var/cache/apk/*
+      yarn
 
 RUN gem install bundler -v 2.1.4
 
@@ -48,7 +47,8 @@ RUN yarn install --frozen-lockfile --no-cache --production
 
 COPY . ./
 
-RUN rake webpacker:compile
-RUN rake assets:precompile
+RUN apk add --no-cache --virtual .gyp python3 make g++ \
+    && RAILS_ENV=production rake assets:precompile \
+    && apk del .gyp
 
 ENTRYPOINT ["./entrypoints/docker-entrypoint.sh"]
