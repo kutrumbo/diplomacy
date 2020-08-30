@@ -81,3 +81,10 @@ test:
 production:
   <<: *default
   url:  <%= ENV["DATABASE_URL"] %>
+
+docker:
+  <<: *default
+  host: database
+  database: <%= ENV['POSTGRES_DB'] %>
+  username: <%= ENV['POSTGRES_USER'] %>
+  password: <%= ENV['POSTGRES_PASSWORD'] %>
