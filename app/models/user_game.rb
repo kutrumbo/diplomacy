@@ -8,4 +8,7 @@ class UserGame < ApplicationRecord
 
   validates_inclusion_of :power, in: POWER_TYPES
   validates :power, uniqueness: { scope: :game, message: 'Cannot repeat power within game' }
+
+  scope :winner, -> { where(winner: true) }
+  scope :draw, -> { where(draw: true) }
 end

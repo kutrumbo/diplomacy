@@ -11,6 +11,7 @@ Rails.application.routes.draw do
     end
   end
   get 'map', to: 'games#map'
+  get 'leaderboard', to: 'games#leaderboard'
 
   get 'signup', to: 'users#new', as: 'signup'
   get 'login', to: 'sessions#new', as: 'login'

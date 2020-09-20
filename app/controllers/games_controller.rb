@@ -21,4 +21,11 @@ class GamesController < ApplicationController
 
   def map
   end
+
+  def leaderboard
+    @games = Game.includes(:user_games).order(:created_at)
+    @users = User.includes(:user_games).sort_by do |user|
+      [-user.user_games.winner.count, -user.user_games.draw.count]
+    end
+  end
 end

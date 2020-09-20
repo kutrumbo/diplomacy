@@ -1,0 +1,30 @@
+section.section
+  .container
+    .box
+      .columns
+        .column
+          table.table
+            thead
+              tr
+                th Name
+                th Wins
+                th Draws
+            tbody
+              - @users.each do |user|
+                tr
+                  td= user.name
+                  td= user.user_games.winner.count
+                  td= user.user_games.draw.count
+        .column
+          table.table
+            thead
+              tr
+                th Games
+                th Started
+                th Result
+            tbody
+              - @games.each do |game|
+                tr
+                  td= link_to game.name, game_path(game)
+                  td= game.created_at.strftime('%b %e')
+                  td= game.result
