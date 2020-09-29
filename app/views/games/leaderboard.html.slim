@@ -9,12 +9,14 @@ section.section
                 th Name
                 th Wins
                 th Draws
+                th Games Played
             tbody
               - @users.each do |user|
                 tr
                   td= user.name
                   td= user.user_games.winner.count
                   td= user.user_games.draw.count
+                  td= user.user_games.count
         .column
           table.table
             thead

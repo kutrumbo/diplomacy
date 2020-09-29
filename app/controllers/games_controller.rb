@@ -23,7 +23,7 @@ class GamesController < ApplicationController
   end
 
   def leaderboard
-    @games = Game.includes(:user_games).order(:created_at)
+    @games = Game.includes(:user_games).order(created_at: :desc)
     @users = User.includes(:user_games).sort_by do |user|
       [-user.user_games.winner.count, -user.user_games.draw.count]
     end
